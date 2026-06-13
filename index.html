@@ -2,290 +2,339 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bolão da Sorte 🏆 - Versão Master</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bolão Pro 🏆</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Bolão Pro">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#059669">
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
+        :root {
+            --primary: #059669;
+            --primary-dark: #047857;
+            --secondary: #1e293b;
+            --accent: #fbbf24;
+            --bg-light: #f8fafc;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            background-color: var(--bg-light);
+        }
+
         .hidden { display: none !important; }
+        
+        /* Glassmorphism */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+
+        /* App-like feel */
+        .safe-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2);
+        }
+
+        .nav-header {
+            background: linear-gradient(to right, #064e3b, #059669);
+            padding-top: env(safe-area-inset-top);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .input-modern {
+            @apply w-full border border-slate-200 rounded-xl p-4 text-lg focus:ring-2 focus:ring-emerald-500 outline-none transition-all bg-slate-50;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade { animation: fadeIn 0.4s ease-out forwards; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen font-sans pb-10">
+<body class="min-h-screen text-slate-800">
 
-    <header class="bg-green-600 text-white py-6 shadow-md sticky top-0 z-40">
-        <div class="container mx-auto px-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold tracking-wide cursor-pointer" onclick="voltarParaInicio()">🏆 Bolão de Resultados</h1>
+    <!-- Header Estilo App -->
+    <header class="nav-header text-white shadow-lg sticky top-0 z-40">
+        <div class="container mx-auto px-5 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="voltarParaInicio()">
+                <span class="text-2xl">🏆</span>
+                <h1 class="text-xl font-extrabold tracking-tight">BOLÃO PRO</h1>
+            </div>
             <div id="header-actions">
-                <button id="btn-entrar-admin" onclick="pedirSenhaAdmin()" class="bg-green-700 hover:bg-green-800 px-4 py-2 rounded-lg text-sm font-semibold transition">
-                    Painel do Organizador (Admin)
+                <button id="btn-entrar-admin" onclick="pedirSenhaAdmin()" class="bg-white/10 hover:bg-white/20 p-2 rounded-full transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                    </svg>
                 </button>
-                <button id="btn-sair-admin" onclick="sairAdmin()" class="hidden bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-semibold transition">
-                    Sair do Admin
+                <button id="btn-sair-admin" onclick="sairAdmin()" class="hidden bg-red-500/20 hover:bg-red-500/40 p-2 rounded-full transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
                 </button>
             </div>
         </div>
     </header>
 
-    <main class="container mx-auto px-4 py-8 max-w-6xl">
+    <main class="container mx-auto px-4 py-6 max-w-lg safe-bottom">
         
-        <div id="error-console" class="hidden mb-6 bg-red-50 border-2 border-red-200 p-4 rounded-xl text-red-800">
-            <h4 class="font-bold flex items-center gap-2 mb-2">⚠️ Erro:</h4>
-            <p id="error-message" class="text-sm font-mono break-all"></p>
+        <!-- Alertas de Erro -->
+        <div id="error-console" class="hidden mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl text-red-800 animate-fade">
+            <p id="error-message" class="text-sm font-medium"></p>
         </div>
 
         <!-- SEÇÃO DE LOGIN ADMIN -->
-        <section id="login-admin-section" class="hidden max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg border border-gray-100 mt-10">
-            <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Acesso Restrito</h2>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-600 mb-1">Senha do Administrador</label>
-                    <input type="password" id="input-senha-admin" placeholder="Digite a senha..." class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 outline-none">
+        <section id="login-admin-section" class="hidden animate-fade mt-10">
+            <div class="glass-card p-8 rounded-3xl shadow-xl">
+                <h2 class="text-2xl font-black mb-2 text-slate-800">Acesso Admin</h2>
+                <p class="text-slate-500 text-sm mb-6">Área restrita para organizadores.</p>
+                <div class="space-y-4">
+                    <input type="password" id="input-senha-admin" placeholder="Digite a senha mestra" class="w-full border border-slate-200 rounded-2xl p-4 focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50">
+                    <button onclick="verificarSenhaAdmin()" class="w-full btn-primary text-white font-bold p-4 rounded-2xl transition shadow-lg">
+                        Entrar no Painel
+                    </button>
+                    <button onclick="voltarParaPalpites()" class="w-full text-slate-400 text-sm font-semibold hover:text-slate-600">
+                        Voltar para o Início
+                    </button>
                 </div>
-                <button onclick="verificarSenhaAdmin()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold p-3 rounded-lg transition shadow-md">
-                    Entrar no Painel
-                </button>
-                <button onclick="voltarParaPalpites()" class="w-full text-gray-500 text-sm hover:underline">
-                    Voltar para Palpites
-                </button>
             </div>
         </section>
 
         <!-- SEÇÃO DO USUÁRIO (PALPITEIRO) -->
-        <section id="user-section" class="space-y-8">
-            <div id="secao-potes" class="mb-8 space-y-4">
-                <h3 class="text-gray-700 font-bold uppercase text-xs tracking-widest ml-1">Prêmios Acumulados por Jogo</h3>
-                <div id="lista-potes" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <section id="user-section" class="space-y-6 animate-fade">
+            <!-- PRÊMIOS -->
+            <div id="secao-potes" class="space-y-3">
+                <h3 class="text-slate-400 font-bold uppercase text-[10px] tracking-widest ml-1">🔥 Prêmios em Jogo</h3>
+                <div id="lista-potes" class="grid grid-cols-1 gap-3">
                     <!-- Injetado via JS -->
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="text-xl font-bold mb-4 text-gray-800">⚽ Escolha um Jogo para dar seu Palpite</h2>
-                <div id="lista-jogos-user" class="grid gap-4">
-                    <p class="text-gray-400 text-xs text-center py-10">Conectando...</p>
+            <!-- JOGOS DISPONÍVEIS -->
+            <div class="space-y-4">
+                <h3 class="text-slate-400 font-bold uppercase text-[10px] tracking-widest ml-1">⚽ Partidas Disponíveis</h3>
+                <div id="lista-jogos-user" class="space-y-3">
+                    <div class="flex justify-center py-10">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                    </div>
                 </div>
             </div>
 
-            <div id="div-palpite" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hidden">
-                <h3 class="text-lg font-bold mb-4 text-gray-800">Preencha seu Palpite</h3>
-                <form id="form-palpite" onsubmit="enviarPalpite(event)" class="space-y-4">
-                    <input type="hidden" id="palpite-jogo-id">
-                    <input type="hidden" id="palpite-valor-jogo">
-                    <div class="bg-gray-100 p-4 rounded-lg font-bold text-center text-lg text-gray-700" id="texto-jogo-selecionado">
-                        Time A vs Time B
+            <!-- FORMULÁRIO DE PALPITE -->
+            <div id="div-palpite" class="hidden animate-fade">
+                <div class="glass-card p-6 rounded-3xl shadow-xl border-emerald-100 border-2">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-black text-slate-800">Seu Palpite</h3>
+                        <button onclick="this.parentElement.parentElement.parentElement.classList.add('hidden')" class="text-slate-400">✕</button>
                     </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Gols do Time A</label>
-                            <input type="number" id="gols-a" min="0" required class="w-full border border-gray-300 rounded-lg p-3 text-center text-xl font-bold focus:ring-2 focus:ring-green-500 outline-none">
+                    <form id="form-palpite" onsubmit="enviarPalpite(event)" class="space-y-6">
+                        <input type="hidden" id="palpite-jogo-id">
+                        <input type="hidden" id="palpite-valor-jogo">
+                        
+                        <div class="bg-emerald-50 p-4 rounded-2xl font-black text-center text-emerald-800 text-lg border border-emerald-100" id="texto-jogo-selecionado">
+                            -
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Gols do Time B</label>
-                            <input type="number" id="gols-b" min="0" required class="w-full border border-gray-300 rounded-lg p-3 text-center text-xl font-bold focus:ring-2 focus:ring-green-500 outline-none">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Seu Nome</label>
-                            <input type="text" id="nome-user" required placeholder="Ex: João Silva" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Seu WhatsApp</label>
-                            <input type="tel" id="wpp-user" required placeholder="Ex: 11999999999" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 outline-none">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-2">Forma de Pagamento</label>
+                        
                         <div class="grid grid-cols-2 gap-4">
-                            <label class="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition">
-                                <input type="radio" name="forma_pagamento" value="pix" checked class="w-4 h-4 text-green-600">
-                                <span class="text-sm font-bold">PIX</span>
-                            </label>
-                            <label class="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition">
-                                <input type="radio" name="forma_pagamento" value="especie" class="w-4 h-4 text-green-600">
-                                <span class="text-sm font-bold">Espécie</span>
-                            </label>
+                            <div class="text-center">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Gols Time A</label>
+                                <input type="number" id="gols-a" min="0" required class="w-full border-2 border-slate-100 rounded-2xl p-4 text-center text-3xl font-black text-emerald-600 focus:border-emerald-500 outline-none bg-white">
+                            </div>
+                            <div class="text-center">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Gols Time B</label>
+                                <input type="number" id="gols-b" min="0" required class="w-full border-2 border-slate-100 rounded-2xl p-4 text-center text-3xl font-black text-emerald-600 focus:border-emerald-500 outline-none bg-white">
+                            </div>
                         </div>
-                    </div>
-                    
-                    <button type="submit" id="btn-confirmar-palpite" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold p-4 rounded-lg transition shadow-lg text-lg">
-                        Confirmar Palpite
-                    </button>
-                </form>
+
+                        <div class="space-y-4">
+                            <input type="text" id="nome-user" required placeholder="Seu Nome Completo" class="w-full border border-slate-200 rounded-2xl p-4 focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50">
+                            <input type="tel" id="wpp-user" required placeholder="Seu WhatsApp (com DDD)" class="w-full border border-slate-200 rounded-2xl p-4 focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50">
+                        </div>
+
+                        <div class="space-y-3">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase">Pagamento</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="flex items-center justify-center gap-2 p-4 border-2 rounded-2xl cursor-pointer hover:bg-emerald-50 transition border-slate-100 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+                                    <input type="radio" name="forma_pagamento" value="pix" checked class="hidden">
+                                    <span class="text-sm font-bold">PIX</span>
+                                </label>
+                                <label class="flex items-center justify-center gap-2 p-4 border-2 rounded-2xl cursor-pointer hover:bg-emerald-50 transition border-slate-100 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+                                    <input type="radio" name="forma_pagamento" value="especie" class="hidden">
+                                    <span class="text-sm font-bold">Espécie</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" id="btn-confirmar-palpite" class="w-full btn-primary text-white font-black p-5 rounded-2xl transition shadow-lg text-lg">
+                            CONFIRMAR PALPITE
+                        </button>
+                    </form>
+                </div>
             </div>
 
-            <div id="div-pagamento" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hidden text-center">
-                <h3 class="text-2xl font-bold mb-2 text-gray-800">🎉 Palpite Registrado!</h3>
-                <p class="text-gray-600 mb-6">Realize o pagamento de <strong id="checkout-valor-texto" class="text-green-600 text-lg">R$ 10,00</strong>.</p>
-                <div id="instrucoes-pagamento" class="p-5 border border-green-200 bg-green-50 rounded-xl"></div>
-                <button onclick="fecharPagamentoEVoltar()" class="mt-6 text-sm text-gray-500 hover:text-gray-800 underline font-semibold">
-                    Fazer outro palpite
-                </button>
+            <!-- TELA DE PAGAMENTO -->
+            <div id="div-pagamento" class="hidden animate-fade text-center">
+                <div class="glass-card p-8 rounded-3xl shadow-xl border-emerald-500 border-2">
+                    <div class="text-5xl mb-4">✅</div>
+                    <h3 class="text-2xl font-black mb-2 text-slate-800">Palpite Enviado!</h3>
+                    <p class="text-slate-500 mb-6">Para validar, realize o pagamento de:</p>
+                    <div class="text-4xl font-black text-emerald-600 mb-6" id="checkout-valor-texto">R$ 0,00</div>
+                    
+                    <div id="instrucoes-pagamento" class="p-6 bg-slate-50 rounded-2xl border border-slate-200 mb-6">
+                        <!-- Injetado via JS -->
+                    </div>
+
+                    <button onclick="fecharPagamentoEVoltar()" class="w-full bg-slate-800 text-white font-bold p-4 rounded-2xl transition">
+                        Voltar para Jogos
+                    </button>
+                </div>
             </div>
         </section>
 
         <!-- SEÇÃO ADMIN -->
-        <section id="admin-section" class="space-y-8 hidden">
-            <div class="border-b border-gray-200 pb-4 flex justify-between items-center">
-                <h2 class="text-2xl font-bold text-gray-800">⚙️ Painel Administrativo</h2>
-                <button onclick="voltarParaPalpites()" class="text-sm text-green-600 hover:text-green-700 font-bold underline">Ir para Área de Palpites</button>
+        <section id="admin-section" class="hidden space-y-6 animate-fade">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-black text-slate-800">Painel Admin</h2>
+                <button onclick="voltarParaPalpites()" class="text-xs font-bold text-emerald-600 underline">Ver como Usuário</button>
             </div>
 
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 class="text-lg font-bold mb-4 text-gray-700">1. Configurações</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Chave PIX</label>
-                        <input type="text" id="admin-chave-pix" value="CHAVE-PIX-AQUI" class="w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-green-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">WhatsApp para Receber</label>
-                        <input type="tel" id="admin-wpp-receber" value="5511999999999" class="w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-green-500">
-                    </div>
+            <!-- Configurações -->
+            <div class="glass-card p-6 rounded-2xl shadow-sm">
+                <h3 class="text-sm font-bold text-slate-400 uppercase mb-4">1. Configurações</h3>
+                <div class="space-y-4">
+                    <input type="text" id="admin-chave-pix" value="CHAVE-PIX-AQUI" placeholder="Sua Chave PIX" class="w-full border rounded-xl p-3 text-sm bg-slate-50">
+                    <input type="tel" id="admin-wpp-receber" value="5511999999999" placeholder="WhatsApp Organizador" class="w-full border rounded-xl p-3 text-sm bg-slate-50">
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 class="text-lg font-bold mb-4 text-gray-700">2. Cadastrar Novo Jogo</h3>
-                <form onsubmit="cadastrarJogo(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Time A</label>
-                        <input type="text" id="admin-time-a" required placeholder="Brasil" class="w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-green-500">
+            <!-- Novo Jogo -->
+            <div class="glass-card p-6 rounded-2xl shadow-sm">
+                <h3 class="text-sm font-bold text-slate-400 uppercase mb-4">2. Novo Jogo</h3>
+                <form onsubmit="cadastrarJogo(event)" class="space-y-3">
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="admin-time-a" required placeholder="Time A" class="w-full border rounded-xl p-3 text-sm bg-slate-50">
+                        <input type="text" id="admin-time-b" required placeholder="Time B" class="w-full border rounded-xl p-3 text-sm bg-slate-50">
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Time B</label>
-                        <input type="text" id="admin-time-b" required placeholder="Argentina" class="w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-green-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Preço (R$)</label>
-                        <input type="number" id="admin-preco" step="0.01" value="10.00" class="w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-green-500">
-                    </div>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold p-2.5 rounded-lg transition">
-                        Adicionar
-                    </button>
+                    <input type="number" id="admin-preco" step="0.01" value="10.00" class="w-full border rounded-xl p-3 text-sm bg-slate-50">
+                    <button type="submit" class="w-full btn-primary text-white font-bold p-3 rounded-xl">Criar Jogo</button>
                 </form>
             </div>
 
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 class="text-lg font-bold mb-4 text-gray-700">3. Gerenciar Jogos Abertos</h3>
-                <div id="lista-jogos-admin" class="grid gap-4"></div>
+            <!-- Gerenciar Jogos -->
+            <div class="space-y-3">
+                <h3 class="text-sm font-bold text-slate-400 uppercase ml-1">3. Jogos Ativos</h3>
+                <div id="lista-jogos-admin" class="space-y-3"></div>
             </div>
 
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 class="text-lg font-bold mb-4 text-gray-700">4. Palpites por Jogo (Abertos)</h3>
-                <div id="container-palpites-por-jogo" class="space-y-6">
-                    <!-- Injetado via JS -->
-                </div>
+            <!-- Palpites -->
+            <div class="space-y-3">
+                <h3 class="text-sm font-bold text-slate-400 uppercase ml-1">4. Palpites Pendentes</h3>
+                <div id="container-palpites-por-jogo" class="space-y-4"></div>
             </div>
 
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 class="text-lg font-bold mb-4 text-gray-700">5. 📋 Bolões Finalizados (Auditoria & CRUD)</h3>
-                <div id="container-boloes-finalizados" class="grid gap-4">
-                    <p class="text-gray-400 text-sm text-center py-6">Nenhum bolão finalizado ainda.</p>
-                </div>
+            <!-- Finalizados -->
+            <div class="space-y-3">
+                <h3 class="text-sm font-bold text-slate-400 uppercase ml-1">5. Histórico</h3>
+                <div id="container-boloes-finalizados" class="space-y-3"></div>
             </div>
         </section>
     </main>
 
-    <!-- MODAL DE COMPROVANTE -->
-    <div id="modal-comprovante" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 hidden z-[60]">
-        <div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl">
-            <div id="comprovante-area" class="bg-white p-6 border-2 border-dashed border-gray-300 rounded-lg text-center">
-                <div class="text-green-600 text-4xl mb-2">🏆</div>
-                <h4 class="font-black text-xl text-gray-800 uppercase">Comprovante de Palpite</h4>
-                <p class="text-[10px] text-gray-400 mb-4" id="comp-id">ID: #000000</p>
-                <div class="space-y-3 text-left border-t border-b py-4 mb-4">
-                    <div class="flex justify-between"><span class="text-xs text-gray-500">Apostador:</span><span class="text-xs font-bold" id="comp-nome">---</span></div>
-                    <div class="flex justify-between"><span class="text-xs text-gray-500">WhatsApp:</span><span class="text-xs font-bold" id="comp-wpp">---</span></div>
-                    <div class="flex justify-between"><span class="text-xs text-gray-500">Partida:</span><span class="text-xs font-bold" id="comp-jogo">---</span></div>
-                    <div class="flex justify-between items-center"><span class="text-xs text-gray-500">Palpite:</span><span class="text-lg font-black text-green-700" id="comp-placar">0 x 0</span></div>
-                    <div class="flex justify-between"><span class="text-xs text-gray-500">Status:</span><span class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">VALIDADO</span></div>
+    <!-- MODAL COMPROVANTE (DESIGN APP) -->
+    <div id="modal-comprovante" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-end sm:items-center justify-center z-[60] hidden">
+        <div class="bg-white rounded-t-[40px] sm:rounded-[40px] p-8 w-full max-w-sm animate-fade">
+            <div id="comprovante-area" class="bg-white p-6 rounded-3xl border-2 border-dashed border-slate-200 text-center">
+                <div class="text-4xl mb-2">🏆</div>
+                <h4 class="font-black text-xl text-slate-800 uppercase tracking-tighter">BOLÃO PRO</h4>
+                <p class="text-[9px] text-slate-400 mb-4 font-mono" id="comp-id">ID: #000000</p>
+                <div class="space-y-3 text-left border-y py-4 mb-4 border-slate-100">
+                    <div class="flex justify-between"><span class="text-[10px] text-slate-400 font-bold uppercase">Apostador</span><span class="text-xs font-black" id="comp-nome">-</span></div>
+                    <div class="flex justify-between"><span class="text-[10px] text-slate-400 font-bold uppercase">WhatsApp</span><span class="text-xs font-black" id="comp-wpp">-</span></div>
+                    <div class="flex justify-between items-center"><span class="text-[10px] text-slate-400 font-bold uppercase">Palpite</span><span class="text-2xl font-black text-emerald-600" id="comp-placar">0 x 0</span></div>
                 </div>
-                <p class="text-[9px] text-gray-400 italic">Este palpite foi validado pelo sistema oficial do Bolão da Sorte.</p>
+                <p class="text-[8px] text-slate-300 italic uppercase font-bold">Comprovante Digital Autêntico</p>
             </div>
-            <div class="mt-4 flex gap-2 flex-col">
-                <button onclick="enviarComprovanteWhatsApp()" class="w-full bg-green-600 text-white py-2 rounded font-bold text-sm hover:bg-green-700 transition">📱 Enviar via WhatsApp</button>
-                <div class="flex gap-2">
-                    <button onclick="baixarComprovante()" class="flex-1 bg-blue-600 text-white py-2 rounded font-bold text-sm hover:bg-blue-700 transition">📥 Baixar Foto</button>
-                    <button onclick="fecharComprovante()" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded font-bold text-sm hover:bg-gray-300 transition">❌ Fechar</button>
+            <div class="mt-6 space-y-3">
+                <button onclick="enviarComprovanteWhatsApp()" class="w-full btn-primary text-white py-4 rounded-2xl font-black text-sm">ENVIAR WHATSAPP</button>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="baixarComprovante()" class="bg-slate-100 text-slate-600 py-4 rounded-2xl font-bold text-xs">BAIXAR FOTO</button>
+                    <button onclick="fecharComprovante()" class="bg-slate-100 text-slate-400 py-4 rounded-2xl font-bold text-xs">FECHAR</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL DE AUDITORIA -->
-    <div id="modal-auditoria" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 hidden z-[60]">
-        <div class="bg-white rounded-xl p-6 max-w-2xl w-full shadow-2xl max-h-[90vh] flex flex-col">
-            <div class="flex justify-between items-start mb-4">
-                <div><h3 class="text-2xl font-bold text-gray-900" id="audit-titulo">Auditoria do Bolão</h3><p class="text-sm text-gray-500 mt-1" id="audit-subtitulo">Resultado: 0 x 0</p></div>
-                <button onclick="fecharAuditoria()" class="text-gray-400 hover:text-gray-600 text-2xl">✕</button>
+    <!-- MODAL AUDITORIA -->
+    <div id="modal-auditoria" class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center p-4 z-[60] hidden">
+        <div class="bg-white rounded-[32px] p-6 w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col animate-fade">
+            <div class="flex justify-between items-start mb-6">
+                <div><h3 class="text-xl font-black text-slate-800" id="audit-titulo">-</h3><p class="text-xs text-slate-400 font-bold uppercase" id="audit-subtitulo">Resultado: 0 x 0</p></div>
+                <button onclick="fecharAuditoria()" class="p-2 bg-slate-100 rounded-full">✕</button>
             </div>
-            <div class="overflow-y-auto flex-1 pr-2 space-y-4">
-                <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                    <h4 class="font-bold text-blue-900 mb-3">📊 Resumo Financeiro</h4>
-                    <div class="space-y-2 text-sm">
-                        <div class="flex justify-between"><span>Total de Apostas:</span><span class="font-bold" id="audit-total-apostas">0</span></div>
-                        <div class="flex justify-between"><span>Valor por Aposta:</span><span class="font-bold" id="audit-valor-aposta">R$ 0,00</span></div>
-                        <div class="flex justify-between"><span>Total Arrecadado:</span><span class="font-bold" id="audit-total-arrecadado">R$ 0,00</span></div>
-                        <div class="flex justify-between text-red-600"><span>Taxa da Banca (20%):</span><span class="font-bold" id="audit-taxa">- R$ 0,00</span></div>
-                        <div class="flex justify-between text-green-700 font-bold border-t pt-2"><span>Prêmio Líquido:</span><span id="audit-premio">R$ 0,00</span></div>
+            <div class="overflow-y-auto flex-1 space-y-4 pr-1">
+                <div class="bg-emerald-50 p-5 rounded-2xl border border-emerald-100">
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div><div class="text-[10px] font-bold text-emerald-600 uppercase">Arrecadado</div><div class="text-lg font-black text-emerald-800" id="audit-total-arrecadado">R$ 0,00</div></div>
+                        <div><div class="text-[10px] font-bold text-emerald-600 uppercase">Prêmio (80%)</div><div class="text-lg font-black text-emerald-800" id="audit-premio">R$ 0,00</div></div>
                     </div>
                 </div>
-                <div class="bg-purple-50 border border-purple-200 p-4 rounded-lg">
-                    <h4 class="font-bold text-purple-900 mb-2">⚽ Resultado Final</h4>
-                    <div class="text-center"><div class="text-3xl font-black text-purple-700" id="audit-placar">0 x 0</div></div>
-                </div>
-                <div id="audit-ganhadores-container" class="bg-green-50 border border-green-200 p-4 rounded-lg">
-                    <h4 class="font-bold text-green-900 mb-3">🏆 Ganhadores</h4>
+                <div class="space-y-2">
+                    <h4 class="text-[10px] font-bold text-slate-400 uppercase ml-1">Ganhadores</h4>
                     <div id="audit-lista-ganhadores" class="space-y-2"></div>
                 </div>
-                <div class="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-                    <h4 class="font-bold text-gray-900 mb-3">📝 Todos os Palpites</h4>
-                    <div id="audit-lista-palpites" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                <div class="space-y-2">
+                    <h4 class="text-[10px] font-bold text-slate-400 uppercase ml-1">Todos os Palpites</h4>
+                    <div id="audit-lista-palpites" class="grid grid-cols-2 gap-2"></div>
                 </div>
             </div>
-            <div class="mt-4 pt-4 border-t flex gap-2 flex-wrap">
-                <button onclick="compartilharNoGrupo()" class="flex-1 min-w-[150px] bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 transition text-sm">📱 Compartilhar</button>
-                <button onclick="editarBolaoFinalizado()" class="flex-1 min-w-[150px] bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition text-sm">✏️ Editar</button>
-                <button onclick="excluirBolaoFinalizado()" class="flex-1 min-w-[150px] bg-red-600 text-white p-3 rounded-lg font-bold hover:bg-red-700 transition text-sm">🗑️ Excluir</button>
-                <button onclick="fecharAuditoria()" class="flex-1 min-w-[150px] bg-gray-800 text-white p-3 rounded-lg font-semibold hover:bg-gray-900 transition text-sm">Fechar</button>
+            <div class="mt-6 pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
+                <button onclick="compartilharNoGrupo()" class="bg-emerald-600 text-white p-4 rounded-2xl font-bold text-xs">COMPARTILHAR</button>
+                <button onclick="excluirBolaoFinalizado()" class="bg-red-50 text-red-500 p-4 rounded-2xl font-bold text-xs">EXCLUIR</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL DE LINK -->
-    <div id="modal-link-palpite" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 hidden z-[60]">
-        <div class="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl">
-            <h3 class="text-xl font-bold text-gray-900 mb-4">🔗 Link para Palpitar</h3>
-            <p class="text-sm text-gray-600 mb-4">Compartilhe este link:</p>
-            <div class="bg-gray-100 p-3 rounded-lg mb-4"><input type="text" id="link-palpite-input" readonly class="w-full bg-transparent text-sm font-mono text-gray-800 outline-none"></div>
-            <div class="flex gap-2 flex-col">
-                <button onclick="copiarLinkPalpite()" class="w-full bg-blue-600 text-white py-2 rounded font-bold text-sm hover:bg-blue-700 transition">📋 Copiar Link</button>
-                <button onclick="compartilharLinkWhatsApp()" class="w-full bg-green-600 text-white py-2 rounded font-bold text-sm hover:bg-green-700 transition">📱 Enviar no WhatsApp</button>
-                <button onclick="fecharLinkPalpite()" class="w-full bg-gray-200 text-gray-700 py-2 rounded font-bold text-sm hover:bg-gray-300 transition">Fechar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL DE EDIÇÃO -->
-    <div id="modal-editar-bolao" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 hidden z-[60]">
-        <div class="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl">
-            <h3 class="text-xl font-bold text-gray-900 mb-4">✏️ Editar Bolão</h3>
-            <div class="space-y-4">
-                <div><label class="block text-xs font-semibold text-gray-600 mb-1">Time A</label><input type="text" id="edit-time-a" class="w-full border border-gray-300 rounded-lg p-2"></div>
-                <div><label class="block text-xs font-semibold text-gray-600 mb-1">Time B</label><input type="text" id="edit-time-b" class="w-full border border-gray-300 rounded-lg p-2"></div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">Placar A</label><input type="number" id="edit-placar-a" class="w-full border border-gray-300 rounded-lg p-2"></div>
-                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">Placar B</label><input type="number" id="edit-placar-b" class="w-full border border-gray-300 rounded-lg p-2"></div>
-                </div>
-            </div>
-            <div class="mt-6 flex gap-2">
-                <button onclick="salvarEdicaoBolao()" class="flex-1 bg-blue-600 text-white py-2 rounded font-bold">💾 Salvar</button>
-                <button onclick="fecharEdicaoBolao()" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded font-bold">Cancelar</button>
+    <!-- MODAL LINK -->
+    <div id="modal-link-palpite" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-6 z-[60] hidden">
+        <div class="bg-white rounded-[32px] p-8 w-full max-w-sm animate-fade">
+            <h3 class="text-xl font-black text-slate-800 mb-2">Link do Jogo</h3>
+            <p class="text-slate-400 text-sm mb-6">Copie e envie para os grupos.</p>
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-6 break-all font-mono text-[10px]" id="link-palpite-display"></div>
+            <div class="space-y-3">
+                <button onclick="copiarLinkPalpite()" class="w-full btn-primary text-white py-4 rounded-2xl font-bold">COPIAR LINK</button>
+                <button onclick="fecharLinkPalpite()" class="w-full bg-slate-100 text-slate-400 py-4 rounded-2xl font-bold">FECHAR</button>
             </div>
         </div>
     </div>
@@ -302,12 +351,13 @@
         let comprovantePalpiteAtual = null;
         let auditoriaBolaoAtual = null;
         let linkPalpiteAtual = null;
-        let bolaoEditandoAtual = null;
         let isAdmin = false;
 
         function showError(msg) {
+            const el = document.getElementById('error-console');
             document.getElementById('error-message').innerText = msg;
-            document.getElementById('error-console').classList.remove('hidden');
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 5000);
         }
 
         function voltarParaInicio() {
@@ -316,7 +366,7 @@
                 document.getElementById('user-section').classList.add('hidden');
                 document.getElementById('login-admin-section').classList.add('hidden');
             } else {
-                location.reload();
+                window.location.href = window.location.pathname;
             }
         }
 
@@ -363,7 +413,7 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const jogoIdParam = urlParams.get('jogo');
                 if (jogoIdParam) selecionarJogo(parseInt(jogoIdParam));
-            } catch (err) { showError("Erro: " + err.message); }
+            } catch (err) { showError("Erro de conexão: " + err.message); }
         }
 
         function renderizarJogosUser(jogos) {
@@ -371,14 +421,23 @@
             container.innerHTML = '';
             const jogosAbertos = (jogos || []).filter(j => j.status && j.status.toString().toLowerCase().trim() === 'aberto');
             if (jogosAbertos.length === 0) {
-                container.innerHTML = '<p class="text-gray-500 text-sm text-center py-10">Nenhum jogo aberto.</p>';
+                container.innerHTML = '<div class="text-center py-10 bg-white rounded-3xl border border-slate-100"><p class="text-slate-400 font-bold">Nenhum jogo aberto no momento.</p></div>';
                 return;
             }
             jogosAbertos.forEach(jogo => {
                 const btn = document.createElement('button');
-                btn.className = "flex justify-between items-center w-full p-4 border-2 border-gray-100 rounded-xl hover:border-green-500 hover:bg-green-50 transition text-left group";
+                btn.className = "flex justify-between items-center w-full p-5 bg-white rounded-3xl border border-slate-100 shadow-sm hover:border-emerald-500 transition-all active:scale-95 text-left group";
                 btn.onclick = () => selecionarJogo(jogo.id);
-                btn.innerHTML = `<div><div class="font-bold text-gray-800 group-hover:text-green-700">${jogo.time_a} x ${jogo.time_b}</div><div class="text-xs text-gray-500">R$ ${parseFloat(jogo.valor_aposta).toFixed(2)}</div></div><span class="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-xs font-bold group-hover:bg-green-600 group-hover:text-white">Palpitar</span>`;
+                btn.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-xl">⚽</div>
+                        <div>
+                            <div class="font-black text-slate-800 group-hover:text-emerald-700">${jogo.time_a} x ${jogo.time_b}</div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Taxa: R$ ${parseFloat(jogo.valor_aposta).toFixed(2)}</div>
+                        </div>
+                    </div>
+                    <div class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-black shadow-lg shadow-emerald-200">PALPITAR</div>
+                `;
                 container.appendChild(btn);
             });
         }
@@ -398,7 +457,7 @@
         async function enviarPalpite(e) {
             e.preventDefault();
             const btn = document.getElementById('btn-confirmar-palpite');
-            btn.disabled = true; btn.innerText = "Enviando...";
+            btn.disabled = true; btn.innerText = "PROCESSANDO...";
             try {
                 const { error } = await _supabase.from('palpites').insert([{
                     jogo_id: document.getElementById('palpite-jogo-id').value,
@@ -412,9 +471,13 @@
                 if (error) throw error;
                 document.getElementById('div-palpite').classList.add('hidden');
                 document.getElementById('div-pagamento').classList.remove('hidden');
-                document.getElementById('instrucoes-pagamento').innerHTML = `<p class="text-sm mb-2">Pague via PIX:</p><div class="bg-white p-2 border rounded font-mono text-xs break-all mb-3">${document.getElementById('admin-chave-pix').value}</div>`;
+                document.getElementById('instrucoes-pagamento').innerHTML = `
+                    <div class="text-[10px] font-black text-slate-400 uppercase mb-2">Chave PIX para Pagamento</div>
+                    <div class="text-sm font-mono font-black text-emerald-700 break-all select-all">${document.getElementById('admin-chave-pix').value}</div>
+                    <p class="text-[9px] text-slate-400 mt-4 uppercase font-bold">Após o pagamento, envie o comprovante no WhatsApp do organizador.</p>
+                `;
                 document.getElementById('form-palpite').reset();
-            } catch (err) { alert(err.message); } finally { btn.disabled = false; btn.innerText = "Confirmar Palpite"; }
+            } catch (err) { alert("Erro ao enviar: " + err.message); } finally { btn.disabled = false; btn.innerText = "CONFIRMAR PALPITE"; }
         }
 
         function fecharPagamentoEVoltar() { document.getElementById('div-pagamento').classList.add('hidden'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
@@ -426,12 +489,23 @@
                 const { data: palpites } = await _supabase.from('palpites').select('id').eq('jogo_id', jogo.id).eq('pago', true);
                 const total = palpites ? palpites.length : 0;
                 const div = document.createElement('div');
-                div.className = "bg-white p-4 rounded-xl border border-green-100 shadow-sm flex justify-between items-center";
-                div.innerHTML = `<div><div class="text-[10px] font-bold text-gray-400 uppercase">${jogo.time_a} x ${jogo.time_b}</div><div class="text-lg font-black text-gray-800">R$ ${(total * jogo.valor_aposta * 0.8).toFixed(2)}</div></div><div class="text-right"><div class="text-[10px] font-bold text-gray-400 uppercase">Apostas</div><div class="text-sm font-bold text-green-600">${total}</div></div>`;
+                div.className = "bg-white p-5 rounded-3xl border border-emerald-100 shadow-sm flex justify-between items-center relative overflow-hidden";
+                div.innerHTML = `
+                    <div class="absolute right-0 top-0 opacity-5 text-4xl transform translate-x-2 -translate-y-2">💰</div>
+                    <div>
+                        <div class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${jogo.time_a} vs ${jogo.time_b}</div>
+                        <div class="text-2xl font-black text-emerald-600">R$ ${(total * jogo.valor_aposta * 0.8).toFixed(2)}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Palpites</div>
+                        <div class="text-lg font-black text-slate-700">${total}</div>
+                    </div>
+                `;
                 container.appendChild(div);
             }
         }
 
+        // --- ADMIN ---
         async function cadastrarJogo(e) {
             e.preventDefault();
             try {
@@ -441,7 +515,9 @@
                     valor_aposta: parseFloat(document.getElementById('admin-preco').value),
                     status: 'aberto'
                 }]);
-                alert("Jogo cadastrado!"); init();
+                alert("Jogo criado!"); init();
+                document.getElementById('admin-time-a').value = '';
+                document.getElementById('admin-time-b').value = '';
             } catch (err) { alert(err.message); }
         }
 
@@ -449,8 +525,22 @@
             const container = document.getElementById('lista-jogos-admin'); container.innerHTML = '';
             const abertos = (jogos || []).filter(j => j.status && j.status.toString().toLowerCase().trim() === 'aberto');
             abertos.forEach(jogo => {
-                const div = document.createElement('div'); div.className = "p-4 border rounded-lg bg-gray-50";
-                div.innerHTML = `<div class="flex justify-between items-start mb-3"><div><span class="font-bold text-lg">${jogo.time_a} x ${jogo.time_b}</span><span class="text-xs text-gray-500 block">R$ ${parseFloat(jogo.valor_aposta).toFixed(2)}</span></div><div class="flex gap-2"><button onclick="abrirLinkPalpite(${jogo.id})" class="text-blue-600 font-bold hover:underline">Link</button><button onclick="excluirJogo(${jogo.id})" class="text-red-500">Excluir</button></div></div><form onsubmit="encerrarJogo(event, ${jogo.id}, '${jogo.time_a} x ${jogo.time_b}')" class="flex items-center gap-2"><input type="number" placeholder="A" required id="res-a-${jogo.id}" class="w-12 border rounded p-1 text-center font-bold"><span>x</span><input type="number" placeholder="B" required id="res-b-${jogo.id}" class="w-12 border rounded p-1 text-center font-bold"><button type="submit" class="bg-red-600 text-white text-xs px-3 py-1 rounded font-bold">Encerrar</button></form>`;
+                const div = document.createElement('div'); div.className = "p-4 bg-white rounded-2xl border border-slate-100 shadow-sm";
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <div><div class="font-black text-slate-800">${jogo.time_a} x ${jogo.time_b}</div><div class="text-[10px] font-bold text-slate-400">R$ ${parseFloat(jogo.valor_aposta).toFixed(2)}</div></div>
+                        <div class="flex gap-2">
+                            <button onclick="abrirLinkPalpite(${jogo.id})" class="p-2 bg-emerald-50 text-emerald-600 rounded-lg">🔗</button>
+                            <button onclick="excluirJogo(${jogo.id})" class="p-2 bg-red-50 text-red-500 rounded-lg">🗑️</button>
+                        </div>
+                    </div>
+                    <form onsubmit="encerrarJogo(event, ${jogo.id}, '${jogo.time_a} x ${jogo.time_b}')" class="flex items-center gap-2">
+                        <input type="number" placeholder="A" required id="res-a-${jogo.id}" class="w-full border rounded-xl p-2 text-center font-black bg-slate-50">
+                        <span class="font-black text-slate-300">X</span>
+                        <input type="number" placeholder="B" required id="res-b-${jogo.id}" class="w-full border rounded-xl p-2 text-center font-black bg-slate-50">
+                        <button type="submit" class="bg-slate-800 text-white px-4 py-2 rounded-xl font-black text-[10px]">ENCERRAR</button>
+                    </form>
+                `;
                 container.appendChild(div);
             });
         }
@@ -459,7 +549,7 @@
             e.preventDefault(); if (!confirm(`Encerrar ${nome}?`)) return;
             try {
                 await _supabase.from('jogos').update({ placar_a: parseInt(document.getElementById(`res-a-${jogoId}`).value), placar_b: parseInt(document.getElementById(`res-b-${jogoId}`).value), status: 'finalizado' }).eq('id', jogoId);
-                alert("Encerrado!"); init();
+                alert("Jogo Finalizado!"); init();
             } catch (err) { alert(err.message); }
         }
 
@@ -471,12 +561,26 @@
             (palpites || []).forEach(p => { if (p.jogos?.status === 'aberto') { if (!porJogo[p.jogo_id]) porJogo[p.jogo_id] = []; porJogo[p.jogo_id].push(p); } });
             Object.keys(porJogo).forEach(id => {
                 const jogo = porJogo[id][0].jogos;
-                const div = document.createElement('div'); div.className = "border rounded-lg overflow-hidden";
-                div.innerHTML = `<div class="bg-blue-600 text-white p-4 font-bold flex justify-between"><span>⚽ ${jogo.time_a} x ${jogo.time_b}</span><button onclick="consultarGanhadores(${id})" class="bg-yellow-500 px-3 py-1 rounded text-sm">Ver Resultado</button></div><div class="bg-white p-4 space-y-2" id="lista-p-${id}"></div>`;
+                const div = document.createElement('div'); div.className = "bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm";
+                div.innerHTML = `
+                    <div class="bg-slate-800 text-white p-4 flex justify-between items-center">
+                        <span class="font-black text-sm uppercase tracking-tight">${jogo.time_a} x ${jogo.time_b}</span>
+                        <button onclick="consultarGanhadores(${id})" class="text-[10px] font-black bg-emerald-600 px-3 py-1 rounded-lg">RESULTADO</button>
+                    </div>
+                    <div class="p-3 space-y-2" id="lista-p-${id}"></div>
+                `;
                 container.appendChild(div);
                 porJogo[id].forEach(p => {
-                    const item = document.createElement('div'); item.className = `p-3 border rounded-lg flex justify-between items-center ${p.pago ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`;
-                    item.innerHTML = `<div class="flex-1"><div class="font-bold">${p.nome}</div><div class="text-sm">Palpite: <b>${p.palpite_a} x ${p.palpite_b}</b></div><div class="text-xs text-gray-500">${p.whatsapp}</div></div><div class="flex gap-2 flex-col"><span class="text-xs font-bold ${p.pago ? 'text-green-700' : 'text-orange-700'}">${p.pago ? '✅ Pago' : '⏳ Pendente'}</span>${!p.pago ? `<button onclick="confirmarPagamento(${p.id})" class="bg-green-600 text-white px-2 py-1 rounded text-[10px]">Aprovar</button>` : `<button onclick="abrirComprovante(${p.id})" class="bg-blue-500 text-white px-2 py-1 rounded text-[10px]">Comprovante</button>`}</div>`;
+                    const item = document.createElement('div'); item.className = `p-3 rounded-xl border flex justify-between items-center ${p.pago ? 'bg-emerald-50 border-emerald-100' : 'bg-orange-50 border-orange-100'}`;
+                    item.innerHTML = `
+                        <div class="flex-1">
+                            <div class="font-black text-slate-800 text-xs">${p.nome}</div>
+                            <div class="text-sm font-black text-emerald-700">${p.palpite_a} x ${p.palpite_b}</div>
+                        </div>
+                        <div class="flex gap-2">
+                            ${!p.pago ? `<button onclick="confirmarPagamento(${p.id})" class="bg-emerald-600 text-white px-3 py-1 rounded-lg text-[9px] font-black">APROVAR</button>` : `<button onclick="abrirComprovante(${p.id})" class="bg-slate-800 text-white px-3 py-1 rounded-lg text-[9px] font-black">RECIBO</button>`}
+                        </div>
+                    `;
                     div.querySelector(`#lista-p-${id}`).appendChild(item);
                 });
             });
@@ -485,51 +589,104 @@
         async function carregarBoleosFinalizados(jogos) {
             const container = document.getElementById('container-boloes-finalizados');
             const finalizados = (jogos || []).filter(j => j.status?.toLowerCase().trim() === 'finalizado');
-            container.innerHTML = finalizados.length === 0 ? '<p class="text-gray-400 text-sm text-center py-6">Nenhum bolão finalizado.</p>' : '';
-            for (let jogo of finalizados) {
-                const { data: palpites } = await _supabase.from('palpites').select('*').eq('jogo_id', jogo.id).eq('pago', true);
-                const ganhadores = palpites ? palpites.filter(p => p.palpite_a === jogo.placar_a && p.palpite_b === jogo.placar_b) : [];
-                const card = document.createElement('div'); card.className = "p-4 border-2 border-purple-300 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 cursor-pointer hover:shadow-lg";
-                card.onclick = () => abrirAuditoria(jogo, palpites, ganhadores);
-                card.innerHTML = `<div class="flex justify-between"><div><h4 class="font-bold text-lg">${jogo.time_a} x ${jogo.time_b}</h4><p class="text-sm">Placar: <b>${jogo.placar_a} x ${jogo.placar_b}</b></p></div><span class="text-xs font-bold px-2 py-1 rounded-full bg-purple-200 text-purple-800">FINALIZADO</span></div><div class="flex justify-between mt-3 pt-3 border-t border-purple-200"><span class="text-xs font-bold ${ganhadores.length > 0 ? 'text-green-700' : 'text-red-700'}">${ganhadores.length > 0 ? '🏆 GANHADORES' : '🎰 SEM GANHADORES'}</span><span class="text-xs text-gray-600">${palpites?.length || 0} Palpites</span></div>`;
+            container.innerHTML = finalizados.length === 0 ? '<p class="text-slate-400 text-xs text-center py-4">Nenhum histórico.</p>' : '';
+            finalizados.forEach(jogo => {
+                const card = document.createElement('div'); card.className = "p-4 bg-white rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm";
+                card.onclick = () => consultarGanhadores(jogo.id);
+                card.innerHTML = `
+                    <div>
+                        <div class="font-black text-slate-800 text-sm">${jogo.time_a} x ${jogo.time_b}</div>
+                        <div class="text-xs font-black text-emerald-600">${jogo.placar_a} x ${jogo.placar_b}</div>
+                    </div>
+                    <span class="text-[9px] font-black px-2 py-1 rounded-lg bg-slate-100 text-slate-400">FINALIZADO</span>
+                `;
                 container.appendChild(card);
-            }
+            });
         }
 
         async function excluirJogo(id) { if (confirm("Excluir?")) { await _supabase.from('palpites').delete().eq('jogo_id', id); await _supabase.from('jogos').delete().eq('id', id); init(); } }
-        function abrirLinkPalpite(id) { linkPalpiteAtual = id; document.getElementById('link-palpite-input').value = `${window.location.origin}${window.location.pathname}?jogo=${id}`; document.getElementById('modal-link-palpite').classList.remove('hidden'); }
+        function abrirLinkPalpite(id) { 
+            const link = `${window.location.origin}${window.location.pathname}?jogo=${id}`;
+            document.getElementById('link-palpite-display').innerText = link;
+            document.getElementById('modal-link-palpite').classList.remove('hidden'); 
+        }
         function fecharLinkPalpite() { document.getElementById('modal-link-palpite').classList.add('hidden'); }
-        function copiarLinkPalpite() { const input = document.getElementById('link-palpite-input'); input.select(); document.execCommand('copy'); alert('Copiado!'); }
-        function compartilharLinkWhatsApp() { const jogo = cacheJogos.find(j => j.id === linkPalpiteAtual); const link = document.getElementById('link-palpite-input').value; window.open(`https://wa.me/?text=${encodeURIComponent(`🏆 Palpite: ${jogo.time_a} x ${jogo.time_b}\nClique: ${link}`)}`, '_blank'); }
+        function copiarLinkPalpite() { 
+            const text = document.getElementById('link-palpite-display').innerText;
+            navigator.clipboard.writeText(text).then(() => alert('Link copiado!'));
+        }
 
         function abrirAuditoria(jogo, todos, ganhadores) {
             auditoriaBolaoAtual = { jogo, todos, ganhadores };
             const total = (todos?.length || 0) * jogo.valor_aposta;
             document.getElementById('audit-titulo').innerText = `${jogo.time_a} x ${jogo.time_b}`;
-            document.getElementById('audit-total-apostas').innerText = todos?.length || 0;
+            document.getElementById('audit-subtitulo').innerText = `Placar: ${jogo.placar_a} x ${jogo.placar_b}`;
             document.getElementById('audit-total-arrecadado').innerText = `R$ ${total.toFixed(2)}`;
-            document.getElementById('audit-taxa').innerText = `- R$ ${(total * 0.2).toFixed(2)}`;
             document.getElementById('audit-premio').innerText = `R$ ${(total * 0.8).toFixed(2)}`;
-            document.getElementById('audit-placar').innerText = `${jogo.placar_a} x ${jogo.placar_b}`;
-            const gCont = document.getElementById('audit-lista-ganhadores'); gCont.innerHTML = ganhadores.length === 0 ? '<div class="text-red-700 font-bold text-center py-4">Nenhum ganhador!</div>' : '';
-            ganhadores.forEach(g => { const d = document.createElement('div'); d.className = 'bg-white p-2 rounded border border-green-200 text-sm'; d.innerHTML = `<b>${g.nome}</b><br>${g.whatsapp}<br><span class="text-green-700 font-bold">R$ ${(total * 0.8 / ganhadores.length).toFixed(2)}</span>`; gCont.appendChild(d); });
+            
+            const gCont = document.getElementById('audit-lista-ganhadores'); 
+            gCont.innerHTML = ganhadores.length === 0 ? '<div class="bg-red-50 p-4 rounded-2xl text-red-500 font-black text-center text-xs">A BANCA GANHOU!</div>' : '';
+            ganhadores.forEach(g => {
+                const d = document.createElement('div'); d.className = 'bg-emerald-50 p-3 rounded-2xl border border-emerald-100 flex justify-between items-center';
+                d.innerHTML = `<div><div class="font-black text-xs">${g.nome}</div><div class="text-[9px] text-slate-400">${g.whatsapp}</div></div><div class="text-emerald-700 font-black text-sm">R$ ${(total * 0.8 / ganhadores.length).toFixed(2)}</div>`;
+                gCont.appendChild(d);
+            });
+            
             const pCont = document.getElementById('audit-lista-palpites'); pCont.innerHTML = '';
-            (todos || []).forEach(p => { const isG = ganhadores.some(g => g.id === p.id); const d = document.createElement('div'); d.className = `p-2 rounded text-xs border ${isG ? 'bg-green-50 border-green-300' : 'bg-gray-100'}`; d.innerHTML = `<b>${p.nome} ${isG ? '🏆' : ''}</b><br>Palpite: ${p.palpite_a} x ${p.palpite_b}`; pCont.appendChild(d); });
+            (todos || []).forEach(p => {
+                const isG = ganhadores.some(g => g.id === p.id);
+                const d = document.createElement('div'); d.className = `p-2 rounded-xl border text-[10px] ${isG ? 'bg-emerald-100 border-emerald-300 font-black' : 'bg-slate-50 border-slate-100'}`;
+                d.innerHTML = `${p.nome}: ${p.palpite_a}x${p.palpite_b}`;
+                pCont.appendChild(d);
+            });
             document.getElementById('modal-auditoria').classList.remove('hidden');
         }
 
         function fecharAuditoria() { document.getElementById('modal-auditoria').classList.add('hidden'); }
         async function confirmarPagamento(id) { await _supabase.from('palpites').update({ pago: true }).eq('id', id); init(); }
-        function abrirComprovante(id) { const p = cachePalpites.find(i => i.id === id); comprovantePalpiteAtual = p; document.getElementById('comp-nome').innerText = p.nome; document.getElementById('comp-placar').innerText = `${p.palpite_a} x ${p.palpite_b}`; document.getElementById('modal-comprovante').classList.remove('hidden'); }
+        
+        function abrirComprovante(id) { 
+            const p = cachePalpites.find(i => i.id === id); 
+            comprovantePalpiteAtual = p; 
+            document.getElementById('comp-id').innerText = `ID: #${p.id.toString().padStart(6, '0')}`;
+            document.getElementById('comp-nome').innerText = p.nome; 
+            document.getElementById('comp-wpp').innerText = p.whatsapp; 
+            document.getElementById('comp-placar').innerText = `${p.palpite_a} x ${p.palpite_b}`; 
+            document.getElementById('modal-comprovante').classList.remove('hidden'); 
+        }
+        
         function fecharComprovante() { document.getElementById('modal-comprovante').classList.add('hidden'); }
-        function baixarComprovante() { html2canvas(document.getElementById('comprovante-area')).then(c => { const l = document.createElement('a'); l.download = `comp-${Date.now()}.png`; l.href = c.toDataURL(); l.click(); }); }
-        function enviarComprovanteWhatsApp() { const p = comprovantePalpiteAtual; window.open(`https://wa.me/${p.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent(`Palpite Validado: ${p.palpite_a} x ${p.palpite_b}`)}`, '_blank'); }
-        async function consultarGanhadores(id) { const { data: j } = await _supabase.from('jogos').select('*').eq('id', id).single(); const { data: p } = await _supabase.from('palpites').select('*').eq('jogo_id', id).eq('pago', true); if (j.status === 'aberto') { alert('Encerre primeiro!'); return; } abrirAuditoria(j, p, p.filter(i => i.palpite_a === j.placar_a && i.palpite_b === j.placar_b)); }
-        function editarBolaoFinalizado() { bolaoEditandoAtual = auditoriaBolaoAtual.jogo; document.getElementById('edit-time-a').value = bolaoEditandoAtual.time_a; document.getElementById('edit-time-b').value = bolaoEditandoAtual.time_b; document.getElementById('edit-placar-a').value = bolaoEditandoAtual.placar_a; document.getElementById('edit-placar-b').value = bolaoEditandoAtual.placar_b; document.getElementById('modal-editar-bolao').classList.remove('hidden'); }
-        function fecharEdicaoBolao() { document.getElementById('modal-editar-bolao').classList.add('hidden'); }
-        async function salvarEdicaoBolao() { await _supabase.from('jogos').update({ time_a: document.getElementById('edit-time-a').value, time_b: document.getElementById('edit-time-b').value, placar_a: parseInt(document.getElementById('edit-placar-a').value), placar_b: parseInt(document.getElementById('edit-placar-b').value) }).eq('id', bolaoEditandoAtual.id); alert('Salvo!'); fecharEdicaoBolao(); init(); }
-        async function excluirBolaoFinalizado() { if (confirm('Excluir?')) { await _supabase.from('palpites').delete().eq('jogo_id', auditoriaBolaoAtual.jogo.id); await _supabase.from('jogos').delete().eq('id', auditoriaBolaoAtual.jogo.id); alert('Excluído!'); fecharAuditoria(); init(); } }
-        function compartilharNoGrupo() { const { jogo, todos, ganhadores } = auditoriaBolaoAtual; const p = (todos.length * jogo.valor_aposta) * 0.8; let m = `🏆 RESULTADO: ${jogo.time_a} ${jogo.placar_a} x ${jogo.placar_b} ${jogo.time_b}\n\n`; if (ganhadores.length > 0) { m += `💰 Prêmio: R$ ${p.toFixed(2)}\n🏆 Ganhadores:\n`; ganhadores.forEach(g => m += `- ${g.nome}\n`); } else m += `🎰 A banca ganhou!`; window.open(`https://wa.me/?text=${encodeURIComponent(m)}`, '_blank'); }
+        function baixarComprovante() { html2canvas(document.getElementById('comprovante-area'), { backgroundColor: '#ffffff', scale: 2 }).then(c => { const l = document.createElement('a'); l.download = `recibo-${Date.now()}.png`; l.href = c.toDataURL(); l.click(); }); }
+        function enviarComprovanteWhatsApp() { const p = comprovantePalpiteAtual; window.open(`https://wa.me/${p.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent(`🏆 BOLÃO PRO\nSeu palpite foi validado!\n\n⚽ Jogo: ${p.jogos?.time_a} x ${p.jogos?.time_b}\n🎯 Placar: ${p.palpite_a} x ${p.palpite_b}\n✅ Status: VALIDADO\n\nBoa sorte!`)}`, '_blank'); }
+        
+        async function consultarGanhadores(id) { 
+            const { data: j } = await _supabase.from('jogos').select('*').eq('id', id).single(); 
+            const { data: p } = await _supabase.from('palpites').select('*').eq('jogo_id', id).eq('pago', true); 
+            if (j.status === 'aberto') { alert('O jogo ainda está aberto!'); return; } 
+            abrirAuditoria(j, p, p.filter(i => i.palpite_a === j.placar_a && i.palpite_b === j.placar_b)); 
+        }
+        
+        async function excluirBolaoFinalizado() { if (confirm('Excluir histórico permanentemente?')) { await _supabase.from('palpites').delete().eq('jogo_id', auditoriaBolaoAtual.jogo.id); await _supabase.from('jogos').delete().eq('id', auditoriaBolaoAtual.jogo.id); alert('Excluído!'); fecharAuditoria(); init(); } }
+        
+        function compartilharNoGrupo() { 
+            const { jogo, todos, ganhadores } = auditoriaBolaoAtual; 
+            const p = (todos.length * jogo.valor_aposta) * 0.8; 
+            let m = `🏆 RESULTADO BOLÃO PRO\n⚽ ${jogo.time_a} ${jogo.placar_a} x ${jogo.placar_b} ${jogo.time_b}\n\n`; 
+            if (ganhadores.length > 0) { m += `💰 Prêmio: R$ ${p.toFixed(2)}\n🏆 Ganhadores:\n`; ganhadores.forEach(g => m += `- ${g.nome}\n`); } 
+            else m += `🎰 A banca ganhou! Ninguém acertou o placar.`; 
+            window.open(`https://wa.me/?text=${encodeURIComponent(m)}`, '_blank'); 
+        }
+
+        // Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('data:text/javascript;base64,' + btoa(`
+                    self.addEventListener('fetch', function(event) {
+                        event.respondWith(fetch(event.request));
+                    });
+                `));
+            });
+        }
 
         init();
     </script>
