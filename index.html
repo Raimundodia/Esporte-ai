@@ -2,125 +2,79 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bolão da Sorte 🏆</title>
+    <title>Bolão Pro - CRUD Completo</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-50 min-h-screen pb-10">
+<body class="bg-gray-100 p-5">
 
-    <header class="bg-green-600 text-white py-6 shadow-md">
-        <div class="container mx-auto px-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold">🏆 Bolão de Resultados</h1>
-            <button onclick="toggleAdmin()" class="bg-green-700 px-4 py-2 rounded-lg text-sm font-semibold">Painel Admin</button>
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded shadow">
+        <h1 class="text-2xl font-bold mb-6">Painel de Administração</h1>
+
+        <div class="mb-10">
+            <h2 class="text-xl font-semibold mb-4">Gerenciar Jogos</h2>
+            <div id="lista-jogos" class="space-y-2"></div>
         </div>
-    </header>
 
-    <main class="container mx-auto px-4 py-8 max-w-4xl">
-        <section id="user-section" class="space-y-8">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="text-xl font-bold mb-4">⚽ Jogos Disponíveis</h2>
-                <div id="lista-jogos-user" class="grid gap-4"></div>
-            </div>
-        </section>
-
-        <section id="admin-section" class="space-y-8 hidden">
-            <div class="flex justify-between items-center">
-                <h2 class="text-2xl font-bold">⚙️ Painel Admin</h2>
-                <button onclick="toggleAdmin()" class="text-green-600 underline font-bold">Voltar</button>
-            </div>
-
-            <div class="bg-white p-6 rounded-xl shadow-sm border">
-                <h3 class="font-bold mb-4">Adicionar/Gerenciar Jogos</h3>
-                <form onsubmit="cadastrarJogo(event)" class="flex gap-2 mb-4">
-                    <input type="text" id="time-a" placeholder="Time A" required class="border p-2 w-full">
-                    <input type="text" id="time-b" placeholder="Time B" required class="border p-2 w-full">
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Adicionar</button>
-                </form>
-                <div id="lista-jogos-admin" class="space-y-2"></div>
-            </div>
-
-            <div class="bg-white p-6 rounded-xl shadow-sm border">
-                <h3 class="font-bold mb-4">Gerenciar Participantes</h3>
-                <table class="w-full text-left">
-                    <thead><tr class="text-xs uppercase bg-gray-100">
-                        <th class="p-2">Nome</th><th class="p-2">Palpite</th><th class="p-2">Pago?</th><th class="p-2">Ação</th>
-                    </tr></thead>
-                    <tbody id="tabela-palpites-admin"></tbody>
-                </table>
-            </div>
-        </section>
-    </main>
+        <div>
+            <h2 class="text-xl font-semibold mb-4">Gerenciar Palpites</h2>
+            <div id="lista-palpites" class="space-y-2"></div>
+        </div>
+    </div>
 
     <script>
-        const _supabase = supabase.createClient("SUA_URL_SUPABASE", "SUA_CHAVE_ANON");
+        const _supabase = supabase.createClient("SUA_URL", "SUA_KEY");
 
-        async function init() {
-            carregarJogosAdmin();
-            carregarPalpitesAdmin();
-        }
+        // --- READ ---
+        async function carregarDados() {
+            const { data: jogos } = await _supabase.from('jogos').select('*');
+            const { data: palpites } = await _supabase.from('palpites').select('*, jogos(time_a, time_b)');
 
-        function toggleAdmin() {
-            document.getElementById('user-section').classList.toggle('hidden');
-            document.getElementById('admin-section').classList.toggle('hidden');
-        }
+            document.getElementById('lista-jogos').innerHTML = jogos.map(j => `
+                <div class="flex gap-2 items-center p-2 border">
+                    <input type="text" value="${j.time_a}" id="a-${j.id}" class="border p-1 w-20">
+                    <span>x</span>
+                    <input type="text" value="${j.time_b}" id="b-${j.id}" class="border p-1 w-20">
+                    <button onclick="atualizarJogo(${j.id})" class="bg-green-500 text-white px-2 py-1 rounded">Salvar</button>
+                    <button onclick="deletar('jogos', ${j.id})" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button>
+                </div>
+            `).join('');
 
-        // --- FUNÇÕES CRUD ---
-
-        async function cadastrarJogo(e) {
-            e.preventDefault();
-            const timeA = document.getElementById('time-a').value;
-            const timeB = document.getElementById('time-b').value;
-            await _supabase.from('jogos').insert([{ time_a: timeA, time_b: timeB, status: 'aberto' }]);
-            init();
-        }
-
-        async function deletarJogo(id) {
-            if(!confirm("Excluir este jogo?")) return;
-            await _supabase.from('jogos').delete().eq('id', id);
-            init();
-        }
-
-        async function deletarPalpite(id) {
-            if(!confirm("Excluir este participante?")) return;
-            await _supabase.from('palpites').delete().eq('id', id);
-            init();
-        }
-
-        async function togglePagamento(id, status) {
-            await _supabase.from('palpites').update({ pago: !status }).eq('id', id);
-            init();
-        }
-
-        async function carregarJogosAdmin() {
-            const { data } = await _supabase.from('jogos').select('*');
-            const container = document.getElementById('lista-jogos-admin');
-            container.innerHTML = data.map(j => `
-                <div class="flex justify-between p-2 border-b">
-                    <span>${j.time_a} x ${j.time_b}</span>
-                    <button onclick="deletarJogo(${j.id})" class="text-red-500 font-bold">Excluir</button>
+            document.getElementById('lista-palpites').innerHTML = palpites.map(p => `
+                <div class="flex gap-2 items-center p-2 border">
+                    <span>${p.nome}:</span>
+                    <input type="number" value="${p.palpite_a}" id="ga-${p.id}" class="w-12 border">
+                    <input type="number" value="${p.palpite_b}" id="gb-${p.id}" class="w-12 border">
+                    <button onclick="atualizarPalpite(${p.id})" class="bg-blue-500 text-white px-2 py-1 rounded">Salvar</button>
+                    <button onclick="deletar('palpites', ${p.id})" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button>
                 </div>
             `).join('');
         }
 
-        async function carregarPalpitesAdmin() {
-            const { data } = await _supabase.from('palpites').select('*');
-            const tbody = document.getElementById('tabela-palpites-admin');
-            tbody.innerHTML = data.map(p => `
-                <tr class="border-b">
-                    <td class="p-2">${p.nome}</td>
-                    <td class="p-2 font-bold">${p.palpite_a}x${p.palpite_b}</td>
-                    <td class="p-2">
-                        <button onclick="togglePagamento(${p.id}, ${p.pago})" class="font-bold ${p.pago ? 'text-green-600' : 'text-gray-400'}">
-                            ${p.pago ? '✅ Pago' : '❌ Pendente'}
-                        </button>
-                    </td>
-                    <td class="p-2"><button onclick="deletarPalpite(${p.id})" class="text-red-500">🗑️</button></td>
-                </tr>
-            `).join('');
+        // --- UPDATE ---
+        async function atualizarJogo(id) {
+            const time_a = document.getElementById(`a-${id}`).value;
+            const time_b = document.getElementById(`b-${id}`).value;
+            await _supabase.from('jogos').update({ time_a, time_b }).eq('id', id);
+            alert("Jogo atualizado!");
         }
 
-        window.onload = init;
+        async function atualizarPalpite(id) {
+            const palpite_a = document.getElementById(`ga-${id}`).value;
+            const palpite_b = document.getElementById(`gb-${id}`).value;
+            await _supabase.from('palpites').update({ palpite_a, palpite_b }).eq('id', id);
+            alert("Palpite atualizado!");
+        }
+
+        // --- DELETE ---
+        async function deletar(tabela, id) {
+            if(confirm("Confirma exclusão?")) {
+                await _supabase.from(tabela).delete().eq('id', id);
+                carregarDados();
+            }
+        }
+
+        window.onload = carregarDados;
     </script>
 </body>
 </html>
