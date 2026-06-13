@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bolão da Sorte 🏆 - Versão Completa</title>
+    <title>Bolão da Sorte 🏆 - Versão Master</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body class="bg-slate-50 min-h-screen font-sans pb-10">
 
-    <header class="bg-green-600 text-white py-6 shadow-md">
+    <header class="bg-green-600 text-white py-6 shadow-md sticky top-0 z-40">
         <div class="container mx-auto px-4 flex justify-between items-center">
             <h1 class="text-2xl font-bold tracking-wide">🏆 Bolão de Resultados</h1>
             <button onclick="toggleAdmin()" class="bg-green-700 hover:bg-green-800 px-4 py-2 rounded-lg text-sm font-semibold transition">
@@ -18,16 +19,19 @@
         </div>
     </header>
 
-    <main class="container mx-auto px-4 py-8 max-w-4xl">
+    <main class="container mx-auto px-4 py-8 max-w-6xl">
         
         <div id="error-console" class="hidden mb-6 bg-red-50 border-2 border-red-200 p-4 rounded-xl text-red-800">
             <h4 class="font-bold flex items-center gap-2 mb-2">⚠️ Erro:</h4>
             <p id="error-message" class="text-sm font-mono break-all"></p>
         </div>
 
-        <div id="banner-pote" class="mb-8 bg-green-900 p-6 rounded-2xl shadow-xl text-center text-white">
-            <h3 id="titulo-pote" class="text-green-200 text-sm font-semibold uppercase tracking-widest">Prêmio Líquido Total</h3>
-            <div id="valor-pote" class="text-4xl font-extrabold mt-2">R$ 0,00</div>
+        <!-- SEÇÃO DE PRÊMIOS POR BOLÃO -->
+        <div id="secao-potes" class="mb-8 space-y-4">
+            <h3 class="text-gray-700 font-bold uppercase text-xs tracking-widest ml-1">Prêmios Acumulados por Jogo</h3>
+            <div id="lista-potes" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Injetado via JS -->
+            </div>
         </div>
 
         <!-- SEÇÃO DO USUÁRIO -->
@@ -143,39 +147,189 @@
             </div>
 
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 class="text-lg font-bold mb-4 text-gray-700">3. Gerenciar Jogos</h3>
+                <h3 class="text-lg font-bold mb-4 text-gray-700">3. Gerenciar Jogos Abertos</h3>
                 <div id="lista-jogos-admin" class="grid gap-4"></div>
             </div>
 
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 class="text-lg font-bold mb-4 text-gray-700">4. Palpites Recebidos</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm border-collapse">
-                        <thead>
-                            <tr class="bg-gray-100 text-gray-600 uppercase text-xs font-semibold">
-                                <th class="p-3">Partida</th>
-                                <th class="p-3">Apostador</th>
-                                <th class="p-3">Palpite</th>
-                                <th class="p-3">Status</th>
-                                <th class="p-3">Ação</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabela-palpites-admin"></tbody>
-                    </table>
+                <h3 class="text-lg font-bold mb-4 text-gray-700">4. Palpites por Jogo (Abertos)</h3>
+                <div id="container-palpites-por-jogo" class="space-y-6">
+                    <!-- Injetado via JS -->
+                </div>
+            </div>
+
+            <!-- SEÇÃO: BOLÕES FINALIZADOS COM CRUD -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold mb-4 text-gray-700">5. 📋 Bolões Finalizados (Auditoria & CRUD)</h3>
+                <div id="container-boloes-finalizados" class="grid gap-4">
+                    <p class="text-gray-400 text-sm text-center py-6">Nenhum bolão finalizado ainda.</p>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- MODAL DE GANHADORES -->
-    <div id="modal-ganhadores" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl max-h-96 overflow-y-auto">
-            <h3 class="text-2xl font-bold text-gray-900 mb-4">🎉 Resultado Final!</h3>
-            <div id="resumo-pote" class="text-sm text-gray-700 mb-4 bg-gray-50 p-4 rounded-lg border space-y-2"></div>
-            <div id="lista-ganhadores-modal" class="space-y-3 mb-6"></div>
-            <button onclick="fecharModal()" class="w-full bg-gray-800 text-white p-3 rounded-lg font-semibold hover:bg-gray-900 transition">
-                Fechar
-            </button>
+    <!-- MODAL DE COMPROVANTE -->
+    <div id="modal-comprovante" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 hidden z-[60]">
+        <div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl">
+            <div id="comprovante-area" class="bg-white p-6 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                <div class="text-green-600 text-4xl mb-2">🏆</div>
+                <h4 class="font-black text-xl text-gray-800 uppercase">Comprovante de Palpite</h4>
+                <p class="text-[10px] text-gray-400 mb-4" id="comp-id">ID: #000000</p>
+                
+                <div class="space-y-3 text-left border-t border-b py-4 mb-4">
+                    <div class="flex justify-between">
+                        <span class="text-xs text-gray-500">Apostador:</span>
+                        <span class="text-xs font-bold" id="comp-nome">---</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-xs text-gray-500">WhatsApp:</span>
+                        <span class="text-xs font-bold" id="comp-wpp">---</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-xs text-gray-500">Partida:</span>
+                        <span class="text-xs font-bold" id="comp-jogo">---</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-500">Palpite:</span>
+                        <span class="text-lg font-black text-green-700" id="comp-placar">0 x 0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-xs text-gray-500">Status:</span>
+                        <span class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">VALIDADO</span>
+                    </div>
+                </div>
+                <p class="text-[9px] text-gray-400 italic">Este palpite foi validado pelo sistema oficial do Bolão da Sorte.</p>
+            </div>
+            <div class="mt-4 flex gap-2 flex-col">
+                <button onclick="enviarComprovanteWhatsApp()" class="w-full bg-green-600 text-white py-2 rounded font-bold text-sm hover:bg-green-700 transition">📱 Enviar via WhatsApp</button>
+                <div class="flex gap-2">
+                    <button onclick="baixarComprovante()" class="flex-1 bg-blue-600 text-white py-2 rounded font-bold text-sm hover:bg-blue-700 transition">📥 Baixar Foto</button>
+                    <button onclick="fecharComprovante()" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded font-bold text-sm hover:bg-gray-300 transition">❌ Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE AUDITORIA DE BOLÃO FINALIZADO -->
+    <div id="modal-auditoria" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 hidden z-[60]">
+        <div class="bg-white rounded-xl p-6 max-w-2xl w-full shadow-2xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-900" id="audit-titulo">Auditoria do Bolão</h3>
+                    <p class="text-sm text-gray-500 mt-1" id="audit-subtitulo">Resultado: 0 x 0</p>
+                </div>
+                <button onclick="fecharAuditoria()" class="text-gray-400 hover:text-gray-600 text-2xl">✕</button>
+            </div>
+
+            <div class="overflow-y-auto flex-1 pr-2 space-y-4">
+                <!-- Resumo Financeiro -->
+                <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                    <h4 class="font-bold text-blue-900 mb-3">📊 Resumo Financeiro</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between"><span>Total de Apostas:</span><span class="font-bold" id="audit-total-apostas">0</span></div>
+                        <div class="flex justify-between"><span>Valor por Aposta:</span><span class="font-bold" id="audit-valor-aposta">R$ 0,00</span></div>
+                        <div class="flex justify-between"><span>Total Arrecadado:</span><span class="font-bold" id="audit-total-arrecadado">R$ 0,00</span></div>
+                        <div class="flex justify-between text-red-600"><span>Taxa da Banca (20%):</span><span class="font-bold" id="audit-taxa">- R$ 0,00</span></div>
+                        <div class="flex justify-between text-green-700 font-bold border-t pt-2"><span>Prêmio Líquido:</span><span id="audit-premio">R$ 0,00</span></div>
+                    </div>
+                </div>
+
+                <!-- Resultado -->
+                <div class="bg-purple-50 border border-purple-200 p-4 rounded-lg">
+                    <h4 class="font-bold text-purple-900 mb-2">⚽ Resultado Final</h4>
+                    <div class="text-center">
+                        <div class="text-3xl font-black text-purple-700" id="audit-placar">0 x 0</div>
+                    </div>
+                </div>
+
+                <!-- Ganhadores -->
+                <div id="audit-ganhadores-container" class="bg-green-50 border border-green-200 p-4 rounded-lg">
+                    <h4 class="font-bold text-green-900 mb-3">🏆 Ganhadores</h4>
+                    <div id="audit-lista-ganhadores" class="space-y-2"></div>
+                </div>
+
+                <!-- Todos os Palpites -->
+                <div class="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+                    <h4 class="font-bold text-gray-900 mb-3">📝 Todos os Palpites</h4>
+                    <div id="audit-lista-palpites" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-4 border-t flex gap-2 flex-wrap">
+                <button onclick="compartilharNoGrupo()" class="flex-1 min-w-[150px] bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 transition text-sm">
+                    📱 Compartilhar
+                </button>
+                <button onclick="editarBolaoFinalizado()" class="flex-1 min-w-[150px] bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition text-sm">
+                    ✏️ Editar
+                </button>
+                <button onclick="excluirBolaoFinalizado()" class="flex-1 min-w-[150px] bg-red-600 text-white p-3 rounded-lg font-bold hover:bg-red-700 transition text-sm">
+                    🗑️ Excluir
+                </button>
+                <button onclick="fecharAuditoria()" class="flex-1 min-w-[150px] bg-gray-800 text-white p-3 rounded-lg font-semibold hover:bg-gray-900 transition text-sm">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE LINK DE PALPITE -->
+    <div id="modal-link-palpite" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 hidden z-[60]">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">🔗 Link para Palpitar</h3>
+            <p class="text-sm text-gray-600 mb-4">Compartilhe este link para que as pessoas façam palpites neste jogo:</p>
+            
+            <div class="bg-gray-100 p-3 rounded-lg mb-4">
+                <input type="text" id="link-palpite-input" readonly class="w-full bg-transparent text-sm font-mono text-gray-800 outline-none">
+            </div>
+
+            <div class="flex gap-2 flex-col">
+                <button onclick="copiarLinkPalpite()" class="w-full bg-blue-600 text-white py-2 rounded font-bold text-sm hover:bg-blue-700 transition">
+                    📋 Copiar Link
+                </button>
+                <button onclick="compartilharLinkWhatsApp()" class="w-full bg-green-600 text-white py-2 rounded font-bold text-sm hover:bg-green-700 transition">
+                    📱 Enviar no WhatsApp
+                </button>
+                <button onclick="fecharLinkPalpite()" class="w-full bg-gray-200 text-gray-700 py-2 rounded font-bold text-sm hover:bg-gray-300 transition">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE EDIÇÃO DE BOLÃO FINALIZADO -->
+    <div id="modal-editar-bolao" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 hidden z-[60]">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">✏️ Editar Bolão Finalizado</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Time A</label>
+                    <input type="text" id="edit-time-a" class="w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Time B</label>
+                    <input type="text" id="edit-time-b" class="w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Placar A</label>
+                        <input type="number" id="edit-placar-a" class="w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Placar B</label>
+                        <input type="number" id="edit-placar-b" class="w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex gap-2">
+                <button onclick="salvarEdicaoBolao()" class="flex-1 bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700 transition">
+                    💾 Salvar
+                </button>
+                <button onclick="fecharEdicaoBolao()" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded font-bold hover:bg-gray-300 transition">
+                    Cancelar
+                </button>
+            </div>
         </div>
     </div>
 
@@ -185,6 +339,12 @@
         
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let jogoSelecionadoId = null;
+        let cacheJogos = [];
+        let cachePalpites = [];
+        let comprovantePalpiteAtual = null;
+        let auditoriaBolaoAtual = null;
+        let linkPalpiteAtual = null;
+        let bolaoEditandoAtual = null;
 
         function showError(msg) {
             document.getElementById('error-message').innerText = msg;
@@ -195,10 +355,12 @@
             try {
                 const { data: jogos, error } = await _supabase.from('jogos').select('*').order('id', { ascending: false });
                 if (error) throw error;
+                cacheJogos = jogos;
                 renderizarJogosUser(jogos);
                 renderizarJogosAdmin(jogos);
                 await carregarPalpitesAdmin();
-                await atualizarBannerPote(jogos);
+                await carregarBoleosFinalizados(jogos);
+                await atualizarPotesSeparados(jogos);
             } catch (err) {
                 showError("Erro: " + err.message);
             }
@@ -209,24 +371,34 @@
             document.getElementById('admin-section').classList.toggle('hidden');
         }
 
-        async function atualizarBannerPote(jogos) {
+        async function atualizarPotesSeparados(jogos) {
             try {
-                if (jogoSelecionadoId) {
-                    const jogo = (jogos || []).find(j => j.id == jogoSelecionadoId);
-                    const { data: palpites } = await _supabase.from('palpites').select('*').eq('jogo_id', jogoSelecionadoId).eq('pago', true);
-                    let totalLiquido = 0;
-                    if (palpites) totalLiquido = (palpites.length * (jogo ? jogo.valor_aposta : 10)) * 0.80;
-                    document.getElementById('titulo-pote').innerText = `Prêmio: ${jogo ? jogo.time_a + ' x ' + jogo.time_b : 'Selecionado'}`;
-                    document.getElementById('valor-pote').innerText = `R$ ${totalLiquido.toFixed(2)}`;
-                } else {
-                    const jogosAbertos = (jogos || []).filter(j => j.status && j.status.toString().toLowerCase().trim() === 'aberto');
-                    let totalGeral = 0;
-                    for (let j of jogosAbertos) {
-                        const { data: palpites } = await _supabase.from('palpites').select('*').eq('jogo_id', j.id).eq('pago', true);
-                        if (palpites) totalGeral += (palpites.length * j.valor_aposta) * 0.80;
-                    }
-                    document.getElementById('titulo-pote').innerText = "Prêmio Total";
-                    document.getElementById('valor-pote').innerText = `R$ ${totalGeral.toFixed(2)}`;
+                const container = document.getElementById('lista-potes');
+                container.innerHTML = '';
+                
+                const jogosAbertos = (jogos || []).filter(j => j.status && j.status.toString().toLowerCase().trim() === 'aberto');
+                
+                if (jogosAbertos.length === 0) {
+                    container.innerHTML = '<div class="col-span-full bg-white p-4 rounded-xl text-center text-gray-400 text-sm italic">Nenhum bolão ativo no momento.</div>';
+                    return;
+                }
+
+                for (let jogo of jogosAbertos) {
+                    const { data: palpites } = await _supabase.from('palpites').select('*').eq('jogo_id', jogo.id).eq('pago', true);
+                    const totalLiquido = (palpites ? palpites.length : 0) * (jogo.valor_aposta || 10) * 0.80;
+                    
+                    const card = document.createElement('div');
+                    card.className = "bg-green-900 p-4 rounded-xl shadow-lg text-white border-l-4 border-green-400";
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="text-[10px] text-green-300 font-bold uppercase tracking-wider">${jogo.time_a} vs ${jogo.time_b}</h4>
+                                <div class="text-xl font-black mt-1">R$ ${totalLiquido.toFixed(2)}</div>
+                            </div>
+                            <div class="bg-green-800 text-[10px] px-2 py-1 rounded font-bold">${palpites ? palpites.length : 0} Apostas</div>
+                        </div>
+                    `;
+                    container.appendChild(card);
                 }
             } catch (err) { console.error(err); }
         }
@@ -245,7 +417,13 @@
                 const preco = jogo.valor_aposta ? parseFloat(jogo.valor_aposta).toFixed(2) : "10.00";
                 card.onclick = () => selecionarJogo(jogo.id, `${jogo.time_a} x ${jogo.time_b}`, preco);
                 card.innerHTML = `
-                    <div><span class="font-bold text-lg">${jogo.time_a} vs ${jogo.time_b}</span><br><span class="text-xs text-green-600">R$ ${preco}</span></div>
+                    <div class="flex items-center gap-3">
+                        <div class="bg-green-100 text-green-700 w-10 h-10 rounded-full flex items-center justify-center font-bold">⚽</div>
+                        <div>
+                            <span class="font-bold text-gray-800">${jogo.time_a} x ${jogo.time_b}</span>
+                            <span class="text-xs text-gray-500 block">Aposta: R$ ${preco}</span>
+                        </div>
+                    </div>
                     <button class="bg-green-600 text-white font-bold px-5 py-2 rounded-lg text-sm">Palpitar</button>
                 `;
                 container.appendChild(card);
@@ -260,7 +438,6 @@
             document.getElementById('btn-confirmar-palpite').innerText = `Confirmar (R$ ${valor})`;
             document.getElementById('div-palpite').classList.remove('hidden');
             document.getElementById('div-palpite').scrollIntoView({ behavior: 'smooth' });
-            init();
         }
 
         async function enviarPalpite(e) {
@@ -333,38 +510,35 @@
         function renderizarJogosAdmin(jogos) {
             const container = document.getElementById('lista-jogos-admin');
             container.innerHTML = '';
-            (jogos || []).forEach(jogo => {
+            const jogosAbertos = (jogos || []).filter(j => j.status && j.status.toString().toLowerCase().trim() === 'aberto');
+            
+            if (jogosAbertos.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-sm text-center py-6">Nenhum jogo aberto.</p>';
+                return;
+            }
+
+            jogosAbertos.forEach(jogo => {
                 const div = document.createElement('div');
                 div.className = "p-4 border rounded-lg bg-gray-50";
-                const status = jogo.status ? jogo.status.toString().toLowerCase().trim() : '';
                 
-                if (status === 'aberto') {
-                    div.innerHTML = `
-                        <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <span class="font-bold text-gray-800 text-lg">${jogo.time_a} x ${jogo.time_b}</span>
-                                <span class="text-xs text-gray-500 block">R$ ${parseFloat(jogo.valor_aposta).toFixed(2)}</span>
-                            </div>
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <span class="font-bold text-gray-800 text-lg">${jogo.time_a} x ${jogo.time_b}</span>
+                            <span class="text-xs text-gray-500 block">R$ ${parseFloat(jogo.valor_aposta).toFixed(2)}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="abrirLinkPalpite(${jogo.id})" class="text-blue-600 text-sm font-bold hover:underline">🔗 Link</button>
                             <button onclick="excluirJogo(${jogo.id})" class="text-red-500 text-sm">Excluir</button>
                         </div>
-                        <form onsubmit="encerrarJogo(event, ${jogo.id}, ${parseFloat(jogo.valor_aposta).toFixed(2)}, '${jogo.time_a} x ${jogo.time_b}')" class="flex items-center gap-2">
-                            <input type="number" placeholder="A" required id="res-a-${jogo.id}" class="w-12 border rounded p-1 text-center font-bold">
-                            <span>x</span>
-                            <input type="number" placeholder="B" required id="res-b-${jogo.id}" class="w-12 border rounded p-1 text-center font-bold">
-                            <button type="submit" class="bg-red-600 text-white text-xs px-3 py-1 rounded font-bold">Encerrar</button>
-                        </form>
-                    `;
-                } else {
-                    div.innerHTML = `
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <span class="font-bold text-gray-800">${jogo.time_a} x ${jogo.time_b}</span>
-                                <span class="text-xs text-gray-500 block">Placar: ${jogo.placar_a} x ${jogo.placar_b}</span>
-                            </div>
-                            <button onclick="mostrarGanhadores(${jogo.id}, ${jogo.placar_a}, ${jogo.placar_b}, ${parseFloat(jogo.valor_aposta).toFixed(2)})" class="bg-amber-500 text-white text-xs px-3 py-1 rounded font-bold">Ver Ganhadores</button>
-                        </div>
-                    `;
-                }
+                    </div>
+                    <form onsubmit="encerrarJogo(event, ${jogo.id}, ${parseFloat(jogo.valor_aposta).toFixed(2)}, '${jogo.time_a} x ${jogo.time_b}')" class="flex items-center gap-2">
+                        <input type="number" placeholder="A" required id="res-a-${jogo.id}" class="w-12 border rounded p-1 text-center font-bold">
+                        <span>x</span>
+                        <input type="number" placeholder="B" required id="res-b-${jogo.id}" class="w-12 border rounded p-1 text-center font-bold">
+                        <button type="submit" class="bg-red-600 text-white text-xs px-3 py-1 rounded font-bold">Encerrar</button>
+                    </form>
+                `;
                 container.appendChild(div);
             });
         }
@@ -376,104 +550,314 @@
                 const placarA = parseInt(document.getElementById(`res-a-${jogoId}`).value);
                 const placarB = parseInt(document.getElementById(`res-b-${jogoId}`).value);
                 await _supabase.from('jogos').update({ placar_a: placarA, placar_b: placarB, status: 'finalizado' }).eq('id', jogoId);
-                await mostrarGanhadores(jogoId, placarA, placarB, vAposta);
+                alert("Jogo encerrado! Acesse a seção de Bolões Finalizados para visualizar.");
                 init();
-            } catch (err) { alert("Erro: " + err.message); }
-        }
-
-        async function mostrarGanhadores(jogoId, placarA, placarB, valorInscricao) {
-            try {
-                const { data: jogo } = await _supabase.from('jogos').select('*').eq('id', jogoId).single();
-                const { data: todosPalpites } = await _supabase.from('palpites').select('*').eq('jogo_id', jogoId).eq('pago', true);
-                const totalApostas = todosPalpites ? todosPalpites.length : 0;
-                
-                const valorTotalArrecadado = totalApostas * valorInscricao;
-                const comissaoBanca = valorTotalArrecadado * 0.20;
-                const premioLiquidoTotal = valorTotalArrecadado - comissaoBanca;
-
-                const ganhadores = todosPalpites ? todosPalpites.filter(p => p.palpite_a === placarA && p.palpite_b === placarB) : [];
-                const naoAcertadores = todosPalpites ? todosPalpites.filter(p => !(p.palpite_a === placarA && p.palpite_b === placarB)) : [];
-
-                document.getElementById('lista-ganhadores-modal').innerHTML = '';
-                document.getElementById('modal-ganhadores').classList.remove('hidden');
-
-                document.getElementById('resumo-pote').innerHTML = `
-                    <div>💰 Total Arrecadado: <b>R$ ${valorTotalArrecadado.toFixed(2)}</b></div>
-                    <div class="text-red-600">✂️ Taxa (20%): <b>- R$ ${comissaoBanca.toFixed(2)}</b></div>
-                    <div class="text-green-700 font-bold text-base pt-1 border-t">🏆 Prêmio Líquido: <b>R$ ${premioLiquidoTotal.toFixed(2)}</b></div>
-                    <div class="text-blue-600 text-sm">👥 Ganhadores: <b>${ganhadores.length}</b></div>
-                `;
-
-                if (ganhadores.length === 0) {
-                    // Nenhum ganhador - notificar todos os apostadores
-                    document.getElementById('lista-ganhadores-modal').innerHTML = `
-                        <div class="p-4 bg-red-50 text-red-700 text-center rounded-lg border font-bold">
-                            A BANCA GANHOU!<br><span class="font-normal text-sm">Ninguém acertou.</span>
-                        </div>
-                        <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                            <p class="text-xs text-blue-700 font-bold mb-3">Notificar todos os apostadores:</p>`;
-                    
-                    naoAcertadores.forEach(p => {
-                        const limpaWpp = p.whatsapp.replace(/\D/g,'');
-                        const msgWpp = encodeURIComponent(`Olá ${p.nome}! Infelizmente ninguém acertou o placar no bolão ${jogo.time_a} x ${jogo.time_b}. O placar foi ${placarA} x ${placarB}. Boa sorte na próxima! 🍀`);
-                        const linkWpp = `https://wa.me/${limpaWpp}?text=${msgWpp}`;
-                        
-                        document.getElementById('lista-ganhadores-modal').innerHTML += `
-                            <div class="flex justify-between items-center mt-2 p-2 bg-white rounded border border-blue-100">
-                                <span class="text-xs font-bold text-gray-700">${p.nome}</span>
-                                <a href="${linkWpp}" target="_blank" class="text-xs text-blue-600 font-bold underline">📱 Avisar</a>
-                            </div>`;
-                    });
-                    
-                    document.getElementById('lista-ganhadores-modal').innerHTML += `</div>`;
-                } else {
-                    // Há ganhadores - notificar ganhadores
-                    const premioIndividual = premioLiquidoTotal / ganhadores.length;
-                    const ehUnico = ganhadores.length === 1;
-                    const mensagemGanhador = ehUnico ? "Você foi o sortudo" : "Você é um dos sortudos";
-                    
-                    document.getElementById('lista-ganhadores-modal').innerHTML = `
-                        <div class="p-3 bg-green-50 border border-green-200 rounded-lg mb-4">
-                            <p class="text-xs text-green-700 font-bold mb-3">Notificar ${ganhadores.length} ganhador(es):</p>`;
-                    
-                    ganhadores.forEach(g => {
-                        const limpaWpp = g.whatsapp.replace(/\D/g,'');
-                        const msgWpp = encodeURIComponent(`Parabéns ${g.nome}! ${mensagemGanhador} e acertou no bolão ${jogo.time_a} x ${jogo.time_b}! 🏆\n\nPlacar: ${placarA} x ${placarB}\n💰 Seu prêmio: R$ ${premioIndividual.toFixed(2)}`);
-                        const linkWpp = `https://wa.me/${limpaWpp}?text=${msgWpp}`;
-                        
-                        document.getElementById('lista-ganhadores-modal').innerHTML += `
-                            <div class="flex justify-between items-center mt-2 p-2 bg-white rounded border border-green-100">
-                                <div>
-                                    <span class="text-xs font-bold text-gray-700 block">${g.nome}</span>
-                                    <span class="text-xs text-green-600 font-bold">R$ ${premioIndividual.toFixed(2)}</span>
-                                </div>
-                                <a href="${linkWpp}" target="_blank" class="text-xs text-blue-600 font-bold underline">📱 Notificar</a>
-                            </div>`;
-                    });
-                    
-                    document.getElementById('lista-ganhadores-modal').innerHTML += `</div>`;
-                }
             } catch (err) { alert("Erro: " + err.message); }
         }
 
         async function carregarPalpitesAdmin() {
             try {
-                const { data: palpites } = await _supabase.from('palpites').select('*, jogos(time_a, time_b)').order('id', { ascending: false });
-                const tbody = document.getElementById('tabela-palpites-admin');
-                tbody.innerHTML = '';
+                const { data: palpites } = await _supabase.from('palpites').select('*, jogos(id, time_a, time_b, status, placar_a, placar_b, valor_aposta)').order('jogo_id', { ascending: false });
+                cachePalpites = palpites;
+                
+                const container = document.getElementById('container-palpites-por-jogo');
+                container.innerHTML = '';
+                
+                const palpitesPorJogo = {};
                 (palpites || []).forEach(p => {
-                    const tr = document.createElement('tr');
-                    tr.className = "border-b hover:bg-gray-50";
-                    tr.innerHTML = `
-                        <td class="p-3">${p.jogos?.time_a} x ${p.jogos?.time_b}</td>
-                        <td class="p-3">${p.nome}</td>
-                        <td class="p-3 font-bold">${p.palpite_a} x ${p.palpite_b}</td>
-                        <td class="p-3">${p.pago ? '✅ Pago' : '⏳ Pendente'}</td>
-                        <td class="p-3">${!p.pago ? `<button onclick="confirmarPagamento(${p.id})" class="bg-green-600 text-white px-2 py-1 rounded text-xs">Aprovar</button>` : ''}</td>
+                    if (p.jogos.status === 'aberto') {
+                        if (!palpitesPorJogo[p.jogo_id]) {
+                            palpitesPorJogo[p.jogo_id] = [];
+                        }
+                        palpitesPorJogo[p.jogo_id].push(p);
+                    }
+                });
+
+                if (Object.keys(palpitesPorJogo).length === 0) {
+                    container.innerHTML = '<p class="text-gray-400 text-sm text-center py-6">Nenhum palpite em jogos abertos.</p>';
+                    return;
+                }
+
+                Object.keys(palpitesPorJogo).forEach(jogoId => {
+                    const palpitesDoJogo = palpitesPorJogo[jogoId];
+                    const jogo = palpitesDoJogo[0].jogos;
+                    
+                    const jogoDiv = document.createElement('div');
+                    jogoDiv.className = "border rounded-lg overflow-hidden";
+                    
+                    const header = document.createElement('div');
+                    header.className = "bg-blue-600 text-white p-4 font-bold flex justify-between items-center";
+                    header.innerHTML = `
+                        <span>⚽ ${jogo.time_a} x ${jogo.time_b}</span>
+                        <button onclick="consultarGanhadores(${jogoId})" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm font-bold transition">
+                            🔍 Ver Resultado
+                        </button>
                     `;
-                    tbody.appendChild(tr);
+                    jogoDiv.appendChild(header);
+                    
+                    const listaPalpites = document.createElement('div');
+                    listaPalpites.className = "bg-white p-4 space-y-2";
+                    
+                    palpitesDoJogo.forEach(p => {
+                        const statusClass = p.pago ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200';
+                        const statusText = p.pago ? '✅ Pago' : '⏳ Pendente';
+                        const statusColor = p.pago ? 'text-green-700' : 'text-orange-700';
+                        
+                        const palpiteDiv = document.createElement('div');
+                        palpiteDiv.className = `p-3 border rounded-lg flex justify-between items-center ${statusClass}`;
+                        palpiteDiv.innerHTML = `
+                            <div class="flex-1">
+                                <div class="font-bold text-gray-800">${p.nome}</div>
+                                <div class="text-sm text-gray-600">Palpite: <span class="font-bold text-lg">${p.palpite_a} x ${p.palpite_b}</span></div>
+                                <div class="text-xs text-gray-500">${p.whatsapp}</div>
+                            </div>
+                            <div class="flex gap-2 flex-col">
+                                <span class="text-xs font-bold ${statusColor}">${statusText}</span>
+                                ${!p.pago ? `<button onclick="confirmarPagamento(${p.id})" class="bg-green-600 text-white px-2 py-1 rounded text-[10px] font-bold">Aprovar</button>` : ''}
+                                ${p.pago ? `<button onclick="abrirComprovante(${p.id})" class="bg-blue-500 text-white px-2 py-1 rounded text-[10px] font-bold">Comprovante</button>` : ''}
+                            </div>
+                        `;
+                        listaPalpites.appendChild(palpiteDiv);
+                    });
+                    
+                    jogoDiv.appendChild(listaPalpites);
+                    container.appendChild(jogoDiv);
                 });
             } catch (err) { console.error(err); }
+        }
+
+        // NOVA FUNÇÃO: ABRIR LINK DE PALPITE
+        function abrirLinkPalpite(jogoId) {
+            linkPalpiteAtual = jogoId;
+            const jogo = cacheJogos.find(j => j.id === jogoId);
+            if (!jogo) return;
+
+            const baseUrl = window.location.origin + window.location.pathname;
+            const linkCompleto = `${baseUrl}?jogo=${jogoId}`;
+            
+            document.getElementById('link-palpite-input').value = linkCompleto;
+            document.getElementById('modal-link-palpite').classList.remove('hidden');
+        }
+
+        function fecharLinkPalpite() {
+            document.getElementById('modal-link-palpite').classList.add('hidden');
+        }
+
+        function copiarLinkPalpite() {
+            const input = document.getElementById('link-palpite-input');
+            input.select();
+            document.execCommand('copy');
+            alert('Link copiado para a área de transferência!');
+        }
+
+        function compartilharLinkWhatsApp() {
+            const jogo = cacheJogos.find(j => j.id === linkPalpiteAtual);
+            if (!jogo) return;
+
+            const baseUrl = window.location.origin + window.location.pathname;
+            const linkCompleto = `${baseUrl}?jogo=${linkPalpiteAtual}`;
+            const msg = encodeURIComponent(`🏆 Faça seu palpite! ⚽\n\n${jogo.time_a} x ${jogo.time_b}\nValor: R$ ${jogo.valor_aposta}\n\nClique aqui para palpitar:\n${linkCompleto}`);
+            
+            window.open(`https://wa.me/?text=${msg}`, '_blank');
+        }
+
+        async function carregarBoleosFinalizados(jogos) {
+            try {
+                const container = document.getElementById('container-boloes-finalizados');
+                const jogosFinalizados = (jogos || []).filter(j => j.status && j.status.toString().toLowerCase().trim() === 'finalizado');
+                
+                if (jogosFinalizados.length === 0) {
+                    container.innerHTML = '<p class="text-gray-400 text-sm text-center py-6">Nenhum bolão finalizado ainda.</p>';
+                    return;
+                }
+
+                container.innerHTML = '';
+
+                for (let jogo of jogosFinalizados) {
+                    const { data: palpites } = await _supabase.from('palpites').select('*').eq('jogo_id', jogo.id).eq('pago', true);
+                    const ganhadores = palpites ? palpites.filter(p => p.palpite_a === jogo.placar_a && p.palpite_b === jogo.placar_b) : [];
+                    
+                    const card = document.createElement('div');
+                    card.className = "p-4 border-2 border-purple-300 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 cursor-pointer hover:shadow-lg transition";
+                    card.onclick = () => abrirAuditoria(jogo, palpites, ganhadores);
+                    
+                    const statusGanhador = ganhadores.length > 0 ? '🏆 COM GANHADOR(ES)' : '🎰 SEM GANHADORES';
+                    const corStatus = ganhadores.length > 0 ? 'text-green-700' : 'text-red-700';
+                    
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h4 class="font-bold text-lg text-gray-800">${jogo.time_a} x ${jogo.time_b}</h4>
+                                <p class="text-sm text-gray-600">Placar: <span class="font-bold">${jogo.placar_a} x ${jogo.placar_b}</span></p>
+                            </div>
+                            <span class="text-xs font-bold px-2 py-1 rounded-full bg-purple-200 text-purple-800">FINALIZADO</span>
+                        </div>
+                        <div class="flex justify-between items-center mt-3 pt-3 border-t border-purple-200">
+                            <span class="text-xs font-bold ${corStatus}">${statusGanhador}</span>
+                            <span class="text-xs text-gray-600">${palpites ? palpites.length : 0} Palpites • ${ganhadores.length} Ganhador(es)</span>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        async function abrirAuditoria(jogo, todosPalpites, ganhadores) {
+            try {
+                auditoriaBolaoAtual = { jogo, todosPalpites, ganhadores };
+
+                const totalApostas = todosPalpites ? todosPalpites.length : 0;
+                const valorInscricao = jogo.valor_aposta;
+                const valorTotalArrecadado = totalApostas * valorInscricao;
+                const comissaoBanca = valorTotalArrecadado * 0.20;
+                const premioLiquidoTotal = valorTotalArrecadado - comissaoBanca;
+
+                document.getElementById('audit-titulo').innerText = `${jogo.time_a} x ${jogo.time_b}`;
+                document.getElementById('audit-subtitulo').innerText = `Resultado: ${jogo.placar_a} x ${jogo.placar_b}`;
+                document.getElementById('audit-total-apostas').innerText = totalApostas;
+                document.getElementById('audit-valor-aposta').innerText = `R$ ${valorInscricao.toFixed(2)}`;
+                document.getElementById('audit-total-arrecadado').innerText = `R$ ${valorTotalArrecadado.toFixed(2)}`;
+                document.getElementById('audit-taxa').innerText = `- R$ ${comissaoBanca.toFixed(2)}`;
+                document.getElementById('audit-premio').innerText = `R$ ${premioLiquidoTotal.toFixed(2)}`;
+                document.getElementById('audit-placar').innerText = `${jogo.placar_a} x ${jogo.placar_b}`;
+
+                const ganhadoresContainer = document.getElementById('audit-lista-ganhadores');
+                ganhadoresContainer.innerHTML = '';
+
+                if (ganhadores.length === 0) {
+                    ganhadoresContainer.innerHTML = '<div class="text-red-700 font-bold text-center py-4">Nenhum ganhador! A banca ganhou.</div>';
+                } else {
+                    const premioIndividual = premioLiquidoTotal / ganhadores.length;
+                    ganhadores.forEach(g => {
+                        const div = document.createElement('div');
+                        div.className = 'bg-white p-2 rounded border border-green-200 text-sm';
+                        div.innerHTML = `
+                            <div class="font-bold text-gray-800">${g.nome}</div>
+                            <div class="text-xs text-gray-600">${g.whatsapp}</div>
+                            <div class="text-green-700 font-bold">R$ ${premioIndividual.toFixed(2)}</div>
+                        `;
+                        ganhadoresContainer.appendChild(div);
+                    });
+                }
+
+                const palpitesContainer = document.getElementById('audit-lista-palpites');
+                palpitesContainer.innerHTML = '';
+
+                (todosPalpites || []).forEach(p => {
+                    const isGanhador = ganhadores.some(g => g.id === p.id);
+                    const div = document.createElement('div');
+                    div.className = `p-2 rounded text-xs border ${isGanhador ? 'bg-green-50 border-green-300' : 'bg-gray-100 border-gray-300'}`;
+                    div.innerHTML = `
+                        <div class="font-bold">${p.nome} ${isGanhador ? '🏆' : ''}</div>
+                        <div class="text-gray-600">Palpite: ${p.palpite_a} x ${p.palpite_b}</div>
+                    `;
+                    palpitesContainer.appendChild(div);
+                });
+
+                document.getElementById('modal-auditoria').classList.remove('hidden');
+            } catch (err) { alert("Erro: " + err.message); }
+        }
+
+        function fecharAuditoria() {
+            document.getElementById('modal-auditoria').classList.add('hidden');
+        }
+
+        function compartilharNoGrupo() {
+            if (!auditoriaBolaoAtual) return;
+
+            const { jogo, todosPalpites, ganhadores } = auditoriaBolaoAtual;
+            const totalApostas = todosPalpites ? todosPalpites.length : 0;
+            const valorInscricao = jogo.valor_aposta;
+            const valorTotalArrecadado = totalApostas * valorInscricao;
+            const comissaoBanca = valorTotalArrecadado * 0.20;
+            const premioLiquidoTotal = valorTotalArrecadado - comissaoBanca;
+
+            let mensagem = `🏆 RESULTADO DO BOLÃO 🏆\n\n`;
+            mensagem += `⚽ ${jogo.time_a} x ${jogo.time_b}\n`;
+            mensagem += `📊 Placar Final: ${jogo.placar_a} x ${jogo.placar_b}\n\n`;
+            mensagem += `💰 RESUMO FINANCEIRO:\n`;
+            mensagem += `Total de Apostas: ${totalApostas}\n`;
+            mensagem += `Total Arrecadado: R$ ${valorTotalArrecadado.toFixed(2)}\n`;
+            mensagem += `Taxa da Banca (20%): R$ ${comissaoBanca.toFixed(2)}\n`;
+            mensagem += `Prêmio Líquido: R$ ${premioLiquidoTotal.toFixed(2)}\n\n`;
+
+            if (ganhadores.length === 0) {
+                mensagem += `🎰 A BANCA GANHOU! Ninguém acertou o placar.\n`;
+            } else {
+                const premioIndividual = premioLiquidoTotal / ganhadores.length;
+                mensagem += `🏆 GANHADORES (${ganhadores.length}):\n`;
+                ganhadores.forEach(g => {
+                    mensagem += `✅ ${g.nome} - R$ ${premioIndividual.toFixed(2)}\n`;
+                });
+            }
+
+            mensagem += `\n📋 Auditoria completa disponível no sistema.`;
+
+            const msgEncoded = encodeURIComponent(mensagem);
+            window.open(`https://wa.me/?text=${msgEncoded}`, '_blank');
+        }
+
+        function editarBolaoFinalizado() {
+            if (!auditoriaBolaoAtual) return;
+            
+            bolaoEditandoAtual = auditoriaBolaoAtual.jogo;
+            
+            document.getElementById('edit-time-a').value = bolaoEditandoAtual.time_a;
+            document.getElementById('edit-time-b').value = bolaoEditandoAtual.time_b;
+            document.getElementById('edit-placar-a').value = bolaoEditandoAtual.placar_a;
+            document.getElementById('edit-placar-b').value = bolaoEditandoAtual.placar_b;
+            
+            document.getElementById('modal-editar-bolao').classList.remove('hidden');
+        }
+
+        function fecharEdicaoBolao() {
+            document.getElementById('modal-editar-bolao').classList.add('hidden');
+        }
+
+        async function salvarEdicaoBolao() {
+            if (!bolaoEditandoAtual) return;
+            
+            try {
+                const timeA = document.getElementById('edit-time-a').value;
+                const timeB = document.getElementById('edit-time-b').value;
+                const placarA = parseInt(document.getElementById('edit-placar-a').value);
+                const placarB = parseInt(document.getElementById('edit-placar-b').value);
+                
+                await _supabase.from('jogos').update({
+                    time_a: timeA,
+                    time_b: timeB,
+                    placar_a: placarA,
+                    placar_b: placarB
+                }).eq('id', bolaoEditandoAtual.id);
+                
+                alert('Bolão atualizado com sucesso!');
+                fecharEdicaoBolao();
+                init();
+            } catch (err) {
+                alert("Erro ao salvar: " + err.message);
+            }
+        }
+
+        async function excluirBolaoFinalizado() {
+            if (!auditoriaBolaoAtual) return;
+            
+            if (!confirm('Tem certeza que deseja excluir este bolão? Esta ação não pode ser desfeita!')) return;
+            
+            try {
+                const jogoId = auditoriaBolaoAtual.jogo.id;
+                
+                // Excluir palpites
+                await _supabase.from('palpites').delete().eq('jogo_id', jogoId);
+                
+                // Excluir jogo
+                await _supabase.from('jogos').delete().eq('id', jogoId);
+                
+                alert('Bolão excluído com sucesso!');
+                fecharAuditoria();
+                init();
+            } catch (err) {
+                alert("Erro ao excluir: " + err.message);
+            }
         }
 
         async function confirmarPagamento(id) {
@@ -481,8 +865,59 @@
             init();
         }
 
-        function fecharModal() {
-            document.getElementById('modal-ganhadores').classList.add('hidden');
+        async function consultarGanhadores(jogoId) {
+            try {
+                const { data: jogo } = await _supabase.from('jogos').select('*').eq('id', jogoId).single();
+                const { data: todosPalpites } = await _supabase.from('palpites').select('*').eq('jogo_id', jogoId).eq('pago', true);
+                
+                if (jogo.status === 'aberto') {
+                    alert('Este jogo ainda está aberto. Encerre-o primeiro para ver os resultados.');
+                    return;
+                }
+
+                const ganhadores = todosPalpites ? todosPalpites.filter(p => p.palpite_a === jogo.placar_a && p.palpite_b === jogo.placar_b) : [];
+                await abrirAuditoria(jogo, todosPalpites, ganhadores);
+            } catch (err) { alert("Erro: " + err.message); }
+        }
+
+        function abrirComprovante(palpiteId) {
+            const p = cachePalpites.find(item => item.id === palpiteId);
+            if (!p) return;
+            
+            comprovantePalpiteAtual = p;
+            
+            document.getElementById('comp-id').innerText = `ID: #${p.id.toString().padStart(6, '0')}`;
+            document.getElementById('comp-nome').innerText = p.nome;
+            document.getElementById('comp-wpp').innerText = p.whatsapp;
+            document.getElementById('comp-jogo').innerText = `${p.jogos?.time_a} x ${p.jogos?.time_b}`;
+            document.getElementById('comp-placar').innerText = `${p.palpite_a} x ${p.palpite_b}`;
+            
+            document.getElementById('modal-comprovante').classList.remove('hidden');
+        }
+
+        function fecharComprovante() {
+            document.getElementById('modal-comprovante').classList.add('hidden');
+        }
+
+        function enviarComprovanteWhatsApp() {
+            if (!comprovantePalpiteAtual) return;
+            
+            const p = comprovantePalpiteAtual;
+            const limpaWpp = p.whatsapp.replace(/\D/g,'');
+            
+            const msg = encodeURIComponent(`Olá ${p.nome}! 🏆\n\nSeu comprovante de palpite foi validado!\n\n📋 ID: #${p.id.toString().padStart(6, '0')}\n⚽ Partida: ${p.jogos?.time_a} x ${p.jogos?.time_b}\n🎯 Palpite: ${p.palpite_a} x ${p.palpite_b}\n✅ Status: VALIDADO\n\nAguarde o resultado do jogo!`);
+            
+            window.open(`https://wa.me/${limpaWpp}?text=${msg}`, '_blank');
+        }
+
+        function baixarComprovante() {
+            const area = document.getElementById('comprovante-area');
+            html2canvas(area).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `comprovante-bolao-${Date.now()}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            });
         }
 
         init();
