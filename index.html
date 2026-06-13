@@ -2,79 +2,92 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Bolão Pro - CRUD Completo</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 p-5">
-
-    <div class="max-w-4xl mx-auto bg-white p-8 rounded shadow">
-        <h1 class="text-2xl font-bold mb-6">Painel de Administração</h1>
-
-        <div class="mb-10">
-            <h2 class="text-xl font-semibold mb-4">Gerenciar Jogos</h2>
+<body class="bg-slate-50 p-6">
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow">
+        <h1 class="text-2xl font-bold mb-6">Painel Administrativo</h1>
+        
+        <!-- JOGOS CRUD -->
+        <div class="mb-8">
+            <h2 class="text-lg font-bold mb-4">Jogos</h2>
             <div id="lista-jogos" class="space-y-2"></div>
         </div>
 
+        <!-- PALPITES CRUD -->
         <div>
-            <h2 class="text-xl font-semibold mb-4">Gerenciar Palpites</h2>
-            <div id="lista-palpites" class="space-y-2"></div>
+            <h2 class="text-lg font-bold mb-4">Palpites (Participantes)</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full border text-sm text-left">
+                    <thead class="bg-gray-100">
+                        <tr><th class="p-2">Nome</th><th class="p-2">Placar</th><th class="p-2">Pago</th><th class="p-2">Ação</th></tr>
+                    </thead>
+                    <tbody id="lista-palpites"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
-        const _supabase = supabase.createClient("SUA_URL", "SUA_KEY");
+        const _supabase = supabase.createClient("SUA_URL_AQUI", "SUA_KEY_AQUI");
 
-        // --- READ ---
-        async function carregarDados() {
+        async function carregarTudo() {
+            // READ (Ler Dados)
             const { data: jogos } = await _supabase.from('jogos').select('*');
-            const { data: palpites } = await _supabase.from('palpites').select('*, jogos(time_a, time_b)');
+            const { data: palpites } = await _supabase.from('palpites').select('*');
 
+            // Renderizar Jogos
             document.getElementById('lista-jogos').innerHTML = jogos.map(j => `
-                <div class="flex gap-2 items-center p-2 border">
-                    <input type="text" value="${j.time_a}" id="a-${j.id}" class="border p-1 w-20">
+                <div class="flex gap-2 items-center p-2 border-b">
+                    <input type="text" value="${j.time_a}" id="a-${j.id}" class="border p-1 w-24">
                     <span>x</span>
-                    <input type="text" value="${j.time_b}" id="b-${j.id}" class="border p-1 w-20">
-                    <button onclick="atualizarJogo(${j.id})" class="bg-green-500 text-white px-2 py-1 rounded">Salvar</button>
-                    <button onclick="deletar('jogos', ${j.id})" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button>
+                    <input type="text" value="${j.time_b}" id="b-${j.id}" class="border p-1 w-24">
+                    <button onclick="updateJogo(${j.id})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Salvar</button>
+                    <button onclick="deletar('jogos', ${j.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Excluir</button>
                 </div>
             `).join('');
 
+            // Renderizar Palpites
             document.getElementById('lista-palpites').innerHTML = palpites.map(p => `
-                <div class="flex gap-2 items-center p-2 border">
-                    <span>${p.nome}:</span>
-                    <input type="number" value="${p.palpite_a}" id="ga-${p.id}" class="w-12 border">
-                    <input type="number" value="${p.palpite_b}" id="gb-${p.id}" class="w-12 border">
-                    <button onclick="atualizarPalpite(${p.id})" class="bg-blue-500 text-white px-2 py-1 rounded">Salvar</button>
-                    <button onclick="deletar('palpites', ${p.id})" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button>
-                </div>
+                <tr class="border-b">
+                    <td class="p-2">${p.nome}</td>
+                    <td class="p-2 font-bold">${p.palpite_a} x ${p.palpite_b}</td>
+                    <td class="p-2">
+                        <button onclick="togglePago(${p.id}, ${p.pago})" class="${p.pago ? 'text-green-600' : 'text-red-600'} font-bold">
+                            ${p.pago ? 'Sim' : 'Não'}
+                        </button>
+                    </td>
+                    <td class="p-2">
+                        <button onclick="deletar('palpites', ${p.id})" class="text-red-500">Excluir</button>
+                    </td>
+                </tr>
             `).join('');
         }
 
-        // --- UPDATE ---
-        async function atualizarJogo(id) {
+        // UPDATE (Atualizar)
+        async function updateJogo(id) {
             const time_a = document.getElementById(`a-${id}`).value;
             const time_b = document.getElementById(`b-${id}`).value;
             await _supabase.from('jogos').update({ time_a, time_b }).eq('id', id);
             alert("Jogo atualizado!");
+            carregarTudo();
         }
 
-        async function atualizarPalpite(id) {
-            const palpite_a = document.getElementById(`ga-${id}`).value;
-            const palpite_b = document.getElementById(`gb-${id}`).value;
-            await _supabase.from('palpites').update({ palpite_a, palpite_b }).eq('id', id);
-            alert("Palpite atualizado!");
+        async function togglePago(id, statusAtual) {
+            await _supabase.from('palpites').update({ pago: !statusAtual }).eq('id', id);
+            carregarTudo();
         }
 
-        // --- DELETE ---
+        // DELETE (Excluir)
         async function deletar(tabela, id) {
-            if(confirm("Confirma exclusão?")) {
+            if(confirm("Deseja mesmo excluir?")) {
                 await _supabase.from(tabela).delete().eq('id', id);
-                carregarDados();
+                carregarTudo();
             }
         }
 
-        window.onload = carregarDados;
+        window.onload = carregarTudo;
     </script>
 </body>
 </html>
