@@ -1,509 +1,362 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>APEX TRADER AI — Análise Esportiva Premium</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<style>
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-:root{
-  --bg:#06090f;--bg2:#0b1120;--bg3:#0f1929;
-  --card:rgba(255,255,255,0.04);--card2:rgba(255,255,255,0.07);
-  --g:#00ff9d;--b:#00d4ff;--gold:#ffd700;--r:#ff4757;--p:#a855f7;--o:#ff7f50;
-  --t:#f0f4ff;--t2:#8899bb;
-  --bdr:rgba(255,255,255,0.08);--bdr2:rgba(0,255,157,0.25);
-  --sw:230px;
-}
-html{scroll-behavior:smooth;}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;overflow-x:hidden;}
-::-webkit-scrollbar{width:4px;}
-::-webkit-scrollbar-track{background:var(--bg);}
-::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:4px;}
-
-/* ── LAYOUT ── */
-#app{display:flex;min-height:100vh;}
-
-/* ── SIDEBAR ── */
-#sidebar{
-  width:var(--sw);background:var(--bg2);border-right:1px solid var(--bdr);
-  display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;
-  z-index:100;overflow-y:auto;transition:transform .3s;
-}
-.logo{padding:18px 16px;border-bottom:1px solid var(--bdr);}
-.logo-inner{display:flex;align-items:center;gap:10px;}
-.logo-icon{
-  width:40px;height:40px;border-radius:12px;
-  background:linear-gradient(135deg,var(--g),var(--b));
-  display:flex;align-items:center;justify-content:center;
-  font-size:22px;box-shadow:0 0 24px rgba(0,255,157,.45);flex-shrink:0;
-}
-.logo-text{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;
-  background:linear-gradient(135deg,var(--g),var(--b));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.1;}
-.logo-sub{font-size:9px;color:var(--t2);letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
-.ai-status{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--bdr);font-size:11px;color:var(--t2);}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--g);box-shadow:0 0 8px var(--g);animation:blink 2s infinite;}
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
-.sb-sec{padding:12px 16px 4px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t2);opacity:.7;}
-.li{
-  display:flex;align-items:center;gap:9px;padding:9px 14px;cursor:pointer;
-  border-left:3px solid transparent;font-size:13px;color:var(--t2);transition:all .2s;
-}
-.li:hover{background:var(--card2);color:var(--t);}
-.li.active{background:rgba(0,255,157,.07);border-left-color:var(--g);color:var(--g);}
-.li-flag{font-size:15px;width:22px;text-align:center;}
-.li-name{flex:1;font-weight:500;}
-.li-cnt{font-size:10px;background:var(--card2);padding:2px 6px;border-radius:8px;color:var(--t2);}
-
-/* ── MAIN ── */
-#main{margin-left:var(--sw);flex:1;display:flex;flex-direction:column;}
-
-/* ── TOPBAR ── */
-#topbar{
-  background:rgba(11,17,32,.95);backdrop-filter:blur(20px);
-  border-bottom:1px solid var(--bdr);padding:0 24px;height:60px;
-  display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;
-}
-.tb-league{font-family:'Rajdhani',sans-serif;font-size:21px;font-weight:700;}
-.tb-badge{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:1px;
-  background:rgba(0,255,157,.1);color:var(--g);border:1px solid rgba(0,255,157,.2);}
-.tb-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
-.ai-badge{display:flex;align-items:center;gap:7px;padding:6px 14px;
-  background:rgba(0,255,157,.08);border:1px solid rgba(0,255,157,.2);
-  border-radius:20px;font-size:11px;color:var(--g);font-weight:600;}
-.date-lbl{font-size:11px;color:var(--t2);}
-
-/* ── CONTENT ── */
-#content{padding:22px 24px 40px;}
-
-/* ── STATS BAR ── */
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
-.sc{background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;padding:14px 16px;
-  display:flex;align-items:center;gap:12px;transition:border-color .25s;}
-.sc:hover{border-color:var(--bdr2);}
-.sc-icon{width:40px;height:40px;border-radius:10px;background:var(--card);
-  display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
-.sc-val{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;line-height:1;}
-.sc-lbl{font-size:11px;color:var(--t2);margin-top:1px;}
-
-/* ── SECTION HEADER ── */
-.sh{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
-.sh-title{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;white-space:nowrap;}
-.sh-line{flex:1;height:1px;background:var(--bdr);}
-.sh-cnt{font-size:11px;color:var(--t2);}
-
-/* ── GAMES GRID ── */
-.gg{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;margin-bottom:30px;}
-
-/* ── GAME CARD ── */
-.gc{
-  background:var(--bg2);border:1px solid var(--bdr);border-radius:16px;
-  padding:15px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden;
-}
-.gc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,var(--g),var(--b));opacity:0;transition:opacity .25s;}
-.gc:hover{border-color:rgba(0,255,157,.3);background:var(--bg3);transform:translateY(-2px);
-  box-shadow:0 8px 32px rgba(0,0,0,.4),0 0 0 1px rgba(0,255,157,.08);}
-.gc:hover::before,.gc.sel::before{opacity:1;}
-.gc.sel{border-color:var(--g);background:rgba(0,255,157,.05);
-  box-shadow:0 0 0 1px rgba(0,255,157,.2),0 8px 32px rgba(0,255,157,.1);}
-.gc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;}
-.gc-ltag{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2);font-weight:500;}
-.gc-time{font-size:13px;font-weight:700;color:var(--b);font-family:'Rajdhani',sans-serif;letter-spacing:.5px;}
-.gc-teams{display:flex;align-items:center;gap:10px;margin-bottom:13px;}
-.gc-team{flex:1;text-align:center;}
-.gc-badge{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;
-  justify-content:center;font-size:13px;font-weight:800;margin:0 auto 6px;
-  font-family:'Rajdhani',sans-serif;letter-spacing:0;}
-.gc-name{font-size:11px;font-weight:600;color:var(--t);line-height:1.3;}
-.gc-vs{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:var(--t2);
-  background:var(--card);padding:5px 7px;border-radius:7px;}
-.gc-probs{display:flex;gap:5px;margin-bottom:12px;}
-.gc-prob{flex:1;text-align:center;background:var(--card);border-radius:8px;padding:6px 4px;border:1px solid var(--bdr);}
-.gc-pl{font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px;}
-.gc-pv{font-size:15px;font-weight:700;font-family:'Rajdhani',sans-serif;}
-.gc-btn{
-  width:100%;padding:8px;border:none;border-radius:10px;cursor:pointer;
-  background:linear-gradient(135deg,rgba(0,255,157,.12),rgba(0,212,255,.08));
-  border:1px solid rgba(0,255,157,.2);color:var(--g);font-size:12px;font-weight:600;
-  font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:7px;
-  transition:all .2s;
-}
-.gc-btn:hover{background:linear-gradient(135deg,rgba(0,255,157,.22),rgba(0,212,255,.15));
-  box-shadow:0 0 18px rgba(0,255,157,.2);}
-
-/* ── EMPTY STATE ── */
-.es{text-align:center;padding:40px 20px;color:var(--t2);}
-.es-icon{font-size:36px;margin-bottom:10px;}
-.es-t{font-size:15px;font-weight:700;color:var(--t);margin-bottom:4px;}
-
-/* ── LOADING STATE ── */
-.loading{display:flex;align-items:center;justify-content:center;gap:12px;padding:40px 20px;}
-.spinner{width:24px;height:24px;border:3px solid var(--bdr);border-top-color:var(--g);border-radius:50%;animation:spin .8s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
-
-/* ── ERROR STATE ── */
-.error-box{background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.3);border-radius:12px;padding:16px;color:var(--r);font-size:13px;margin-bottom:20px;}
-
-/* ── API INFO ── */
-.api-info{font-size:11px;color:var(--t2);padding:12px;background:rgba(0,255,157,.05);border:1px solid rgba(0,255,157,.15);border-radius:8px;margin-top:20px;}
-.api-info a{color:var(--g);text-decoration:underline;}
-.api-info a:hover{color:var(--b);}
-
-/* ── PARTICLES ── */
-#particles{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:1;}
-.pt{position:absolute;background:var(--g);border-radius:50%;opacity:.1;animation:float 20s infinite;}
-@keyframes float{0%,100%{transform:translateY(0) translateX(0);}50%{transform:translateY(-100px) translateX(50px);}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bolão Instantâneo da Copa 🏆</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-slate-50 min-h-screen font-sans">
 
-<!-- ═══════════ APP ═══════════ -->
-<div id="app">
+    <header class="bg-green-600 text-white py-6 shadow-md">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold tracking-wide">🏆 Bolão de Resultados</h1>
+            <button onclick="toggleAdmin()" class="bg-green-700 hover:bg-green-800 px-4 py-2 rounded-lg text-sm font-semibold transition">
+                Painel do Organizador (Admin)
+            </button>
+        </div>
+    </header>
 
-<!-- ═══════════ SIDEBAR ═══════════ -->
-<nav id="sidebar">
-  <div class="logo">
-    <div class="logo-inner">
-      <div class="logo-icon">⚡</div>
-      <div>
-        <div class="logo-text">APEX</div>
-        <div class="logo-sub">TRADER AI</div>
-      </div>
+    <main class="container mx-auto px-4 py-8 max-w-4xl">
+        
+        <section id="user-section" class="space-y-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h2 class="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                    ⚽ Escolha um Jogo para dar seu Palpite
+                </h2>
+                <div id="lista-jogos-user" class="grid gap-4">
+                    <p class="text-gray-500 text-sm">Carregando partidas disponíveis...</p>
+                </div>
+            </div>
+
+            <div id="div-palpite" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hidden">
+                <h3 class="text-lg font-bold mb-4 text-gray-800">Preencha seu Palpite</h3>
+                <form id="form-palpite" onsubmit="enviarPalpite(event)" class="space-y-4">
+                    <input type="hidden" id="palpite-jogo-id">
+                    <div class="bg-gray-100 p-4 rounded-lg font-bold text-center text-lg text-gray-700" id="texto-jogo-selecionado">
+                        Time A vs Time B
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Gols do Time A</label>
+                            <input type="number" id="gols-a" min="0" required class="w-full border border-gray-300 rounded-lg p-3 text-center text-xl font-bold focus:ring-2 focus:ring-green-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Gols do Time B</label>
+                            <input type="number" id="gols-b" min="0" required class="w-full border border-gray-300 rounded-lg p-3 text-center text-xl font-bold focus:ring-2 focus:ring-green-500 outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Seu Nome Completo</label>
+                            <input type="text" id="nome-user" required placeholder="Ex: João Silva" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Seu WhatsApp (com DDD)</label>
+                            <input type="tel" id="wpp-user" required placeholder="Ex: 11999999999" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 outline-none">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold p-4 rounded-lg transition shadow-lg text-lg">
+                        Confirmar Palpite (R$ 10,00)
+                    </button>
+                </form>
+            </div>
+        </section>
+
+
+        <section id="admin-section" class="space-y-8 hidden">
+            <div class="border-b border-gray-200 pb-4 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-gray-800">⚙️ Painel de Controle Administrativo</h2>
+                <button onclick="toggleAdmin()" class="text-sm text-green-600 hover:text-green-700 font-bold underline">Voltar para Palpites</button>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold mb-4 text-gray-700">1. Cadastrar Novo Jogo na Copa</h3>
+                <form onsubmit="cadastrarJogo(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Time Mandante (A)</label>
+                        <input type="text" id="admin-time-a" required placeholder="Ex: Brasil" class="w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Time Visitante (B)</label>
+                        <input type="text" id="admin-time-b" required placeholder="Ex: França" class="w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold p-2.5 rounded-lg transition">
+                        Adicionar Partida
+                    </button>
+                </form>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold mb-4 text-gray-700">2. Encerrar Jogos e Declarar Ganhadores</h3>
+                <div id="lista-jogos-admin" class="grid gap-4"></div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold mb-4 text-gray-700">3. Validar Pagamentos (Aprovações de Pix)</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-600 uppercase text-xs font-semibold">
+                                <th class="p-3">Partida</th>
+                                <th class="p-3">Apostador</th>
+                                <th class="p-3">Palpite</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-palpites-admin"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="modal-ganhadores" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl transform transition-all">
+            <h3 class="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">🎉 Fim de Jogo!</h3>
+            <p id="resumo-pote" class="text-sm text-gray-600 mb-4 bg-gray-50 p-3 rounded-lg border"></p>
+            
+            <div id="lista-ganhadores-modal" class="space-y-3 max-h-60 overflow-y-auto mb-6"></div>
+            
+            <button onclick="fecharModal()" class="w-full bg-gray-800 text-white p-3 rounded-lg font-semibold hover:bg-gray-900 transition">
+                Fechar Janela
+            </button>
+        </div>
     </div>
-  </div>
-  <div class="ai-status">
-    <div class="dot"></div>
-    IA Online · Neural Engine v3.2
-  </div>
-  <div class="sb-sec">Ligas Nacionais</div>
-  <div id="nat-nav"></div>
-  <div class="sb-sec">Copas &amp; Internacionais</div>
-  <div id="cup-nav"></div>
-  <div style="margin-top:auto;padding:14px 16px;border-top:1px solid var(--bdr);">
-    <div style="font-size:9px;color:var(--t2);text-align:center;line-height:1.7;">
-      🤖 APEX Neural Engine v3.2<br>
-      📡 Dados Reais · Football-Data.org<br>
-      🔒 Análise Criptografada
-    </div>
-  </div>
-</nav>
 
-<!-- ═══════════ MAIN ═══════════ -->
-<div id="main">
-  <!-- TOPBAR -->
-  <div id="topbar">
-    <div class="tb-league" id="tb-title">Premier League</div>
-    <div class="tb-badge" id="tb-badge">🏴󠁧󠁢󠁥󠁮󠁧󠁿 ENGLAND</div>
-    <div class="tb-right">
-      <div class="date-lbl" id="date-lbl"></div>
-      <div class="ai-badge"><div class="dot"></div>IA ATIVA</div>
-    </div>
-  </div>
+    <script>
+        // Credenciais integradas conforme solicitado
+        const SUPABASE_URL = "https://lmfezejuqoibhcuoqfoq.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_nTh3JkKpKRVkSOLRfop5Sg_Mw_d32sQ"; 
+        
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const VALOR_APOSTA = 10; // R$ 10 reais por palpite fixado no pote
 
-  <!-- CONTENT -->
-  <div id="content">
-    <div class="stats-row" id="stats-row"></div>
+        async function init() {
+            await carregarJogosUser();
+            await carregarJogosAdmin();
+            await carregarPalpitesAdmin();
+        }
 
-    <!-- ERRO DE API -->
-    <div id="api-error" style="display:none;" class="error-box"></div>
+        function toggleAdmin() {
+            document.getElementById('user-section').classList.toggle('hidden');
+            document.getElementById('admin-section').classList.toggle('hidden');
+        }
 
-    <!-- INSTRUÇÕES DE SETUP -->
-    <div id="setup-info" class="api-info" style="display:none;">
-      ⚠️ <strong>Setup Necessário:</strong> Para usar dados reais, você precisa obter uma chave gratuita em 
-      <a href="https://www.football-data.org/client/register" target="_blank">football-data.org</a>
-      e adicionar o token no código (procure por "YOUR_API_TOKEN_HERE").
-    </div>
+        // --- FLUXO DO USUÁRIO ---
+        async function carregarJogosUser() {
+            const { data: jogos } = await _supabase.from('jogos').select('*').eq('status', 'aberto').order('id', { ascending: false });
+            const container = document.getElementById('lista-jogos-user');
+            container.innerHTML = '';
 
-    <div class="sh">
-      <div class="sh-title">🔴 Hoje — Jogos ao Vivo / Em Breve</div>
-      <div class="sh-line"></div>
-      <div class="sh-cnt" id="cnt-today">0 jogos</div>
-    </div>
-    <div class="gg" id="g-today"></div>
+            if (!jogos || jogos.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-sm py-4">Nenhuma partida disponível para palpites no momento.</p>';
+                return;
+            }
 
-    <div class="sh">
-      <div class="sh-title">📅 Amanhã — Análise Antecipada</div>
-      <div class="sh-line"></div>
-      <div class="sh-cnt" id="cnt-tomorrow">0 jogos</div>
-    </div>
-    <div class="gg" id="g-tomorrow"></div>
+            jogos.forEach(jogo => {
+                const card = document.createElement('div');
+                card.className = "flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-green-500 transition cursor-pointer";
+                card.onclick = () => selecionarJogo(jogo.id, `${jogo.time_a} x ${jogo.time_b}`);
+                card.innerHTML = `
+                    <span class="font-bold text-gray-700 text-base">${jogo.time_a} <span class="text-gray-400 font-normal mx-1">vs</span> ${jogo.time_b}</span>
+                    <button class="bg-green-600 text-white font-semibold px-4 py-1.5 rounded-lg text-sm hover:bg-green-700">Palpitar</button>
+                `;
+                container.appendChild(card);
+            });
+        }
 
-    <div class="api-info">
-      ℹ️ Os dados são fornecidos pela <a href="https://www.football-data.org" target="_blank">Football-Data.org API</a>. 
-      Apenas jogos reais que estão acontecendo ou irão acontecer são exibidos.
-    </div>
-  </div>
-</div>
+        function selecionarJogo(id, texto) {
+            document.getElementById('palpite-jogo-id').value = id;
+            document.getElementById('texto-jogo-selecionado').innerText = texto;
+            document.getElementById('div-palpite').classList.remove('hidden');
+            document.getElementById('div-palpite').scrollIntoView({ behavior: 'smooth' });
+        }
 
-</div><!-- /app -->
+        async function enviarPalpite(e) {
+            e.preventDefault();
+            const jogoId = document.getElementById('palpite-jogo-id').value;
+            const palpiteA = parseInt(document.getElementById('gols-a').value);
+            const palpiteB = parseInt(document.getElementById('gols-b').value);
+            const nome = document.getElementById('nome-user').value;
+            const whatsapp = document.getElementById('wpp-user').value;
 
-<div id="particles"></div>
+            const { error } = await _supabase.from('palpites').insert([{
+                jogo_id: jogoId, palpite_a: palpiteA, palpite_b: palpiteB, nome: nome, whatsapp: whatsapp, pago: false
+            }]);
 
-<script>
-// ═══════════════════════════════════════════════════════════
-// CONFIGURAÇÃO DA API
-// ═══════════════════════════════════════════════════════════
-const FOOTBALL_DATA_API = 'https://api.football-data.org/v4';
-const API_TOKEN = 'YOUR_API_TOKEN_HERE'; // Obtenha em https://www.football-data.org/client/register
+            if (error) {
+                alert("Erro ao salvar palpite: " + error.message);
+            } else {
+                alert(`Sucesso, ${nome}!\nSeu palpite de ${palpiteA}x${palpiteB} foi registrado.\n\n👉 Realize o pagamento de R$ 10,00 via PIX para o organizador validar sua participação.`);
+                document.getElementById('form-palpite').reset();
+                document.getElementById('div-palpite').classList.add('hidden');
+                init();
+            }
+        }
 
-// Mapeamento de IDs da API para nomes locais
-const COMPETITIONS_MAP = {
-  'PL': { name: 'Premier League', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', country: 'England', type: 'nat' },
-  'PD': { name: 'La Liga', flag: '🇪🇸', country: 'Spain', type: 'nat' },
-  'SA': { name: 'Serie A', flag: '🇮🇹', country: 'Italy', type: 'nat' },
-  'BL1': { name: 'Bundesliga', flag: '🇩🇪', country: 'Germany', type: 'nat' },
-  'FL1': { name: 'Ligue 1', flag: '🇫🇷', country: 'France', type: 'nat' },
-  'BSA': { name: 'Brasileirão', flag: '🇧🇷', country: 'Brasil', type: 'nat' },
-  'CL': { name: 'Champions League', flag: '🌍', country: 'Europa', type: 'cup' },
-  'EC': { name: 'European Championship', flag: '🇪🇺', country: 'Europa', type: 'cup' },
-};
+        // --- FLUXO DO ADMINISTRADOR ---
+        async function cadastrarJogo(e) {
+            e.preventDefault();
+            const timeA = document.getElementById('admin-time-a').value;
+            const timeB = document.getElementById('admin-time-b').value;
 
-const LEAGUES = Object.entries(COMPETITIONS_MAP).map(([id, data]) => ({
-  id,
-  ...data
-}));
+            const { error } = await _supabase.from('jogos').insert([{ time_a: timeA, time_b: timeB, status: 'aberto' }]);
+            if (error) alert(error.message);
+            else {
+                document.getElementById('admin-time-a').value = '';
+                document.getElementById('admin-time-b').value = '';
+                init();
+            }
+        }
 
-// ═══════════════════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════════════════
-let CUR = 'PL';
-let GAMES_CACHE = {};
-let API_ERROR = null;
+        async function carregarJogosAdmin() {
+            const { data: jogos } = await _supabase.from('jogos').select('*').order('id', { ascending: false });
+            const container = document.getElementById('lista-jogos-admin');
+            container.innerHTML = '';
 
-// ═══════════════════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
-  createParticles();
-  setDate();
-  renderSidebar();
-  renderLeague('PL');
-  checkApiSetup();
-});
+            if(!jogos) return;
 
-function checkApiSetup() {
-  if (API_TOKEN === 'YOUR_API_TOKEN_HERE') {
-    document.getElementById('setup-info').style.display = 'block';
-  }
-}
+            jogos.forEach(jogo => {
+                const div = document.createElement('div');
+                div.className = "p-4 border rounded-lg bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4";
+                
+                if (jogo.status === 'aberto') {
+                    div.innerHTML = `
+                        <div>
+                            <span class="font-bold text-gray-800">${jogo.time_a} x ${jogo.time_b}</span>
+                            <span class="ml-2 px-2 py-0.5 bg-green-100 text-green-800 rounded text-xs font-semibold">Inscrições Abertas</span>
+                        </div>
+                        <form onsubmit="encerrarJogo(event, ${jogo.id})" class="flex items-center gap-2">
+                            <input type="number" placeholder="Gols A" required id="res-a-${jogo.id}" class="w-16 border rounded p-1 text-center bg-white font-bold">
+                            <span class="text-gray-400">x</span>
+                            <input type="number" placeholder="Gols B" required id="res-b-${jogo.id}" class="w-16 border rounded p-1 text-center bg-white font-bold">
+                            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-2 rounded-lg font-bold transition">
+                                Salvar Placar & Dividir Prêmio
+                            </button>
+                        </form>
+                    `;
+                } else {
+                    div.innerHTML = `
+                        <div>
+                            <span class="font-bold text-gray-500">${jogo.time_a} ${jogo.placar_a} x ${jogo.placar_b} ${jogo.time_b}</span>
+                            <span class="ml-2 px-2 py-0.5 bg-gray-200 text-gray-700 rounded text-xs font-semibold">Finalizado</span>
+                        </div>
+                        <button onclick="calcularGanhadores(${jogo.id}, ${jogo.placar_a}, ${jogo.placar_b})" class="bg-amber-500 hover:bg-amber-600 text-white text-xs px-3 py-1.5 rounded-lg font-bold">
+                            Ver Relatório de Ganhadores
+                        </button>
+                    `;
+                }
+                container.appendChild(div);
+            });
+        }
 
-function setDate() {
-  const d = new Date();
-  const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-  document.getElementById('date-lbl').textContent = d.toLocaleDateString('pt-BR', opts);
-}
+        async function carregarPalpitesAdmin() {
+            const { data: palpites } = await _supabase.from('palpites').select('*, jogos(time_a, time_b)').order('id', { ascending: false });
+            const tbody = document.getElementById('tabela-palpites-admin');
+            tbody.innerHTML = '';
 
-function createParticles() {
-  const el = document.getElementById('particles');
-  for (let i = 0; i < 18; i++) {
-    const p = document.createElement('div');
-    p.className = 'pt';
-    const sz = 2 + Math.random() * 4;
-    p.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random() * 100}%;
-      animation-duration:${12 + Math.random() * 20}s;animation-delay:${Math.random() * 15}s;`;
-    el.appendChild(p);
-  }
-}
+            if(!palpites || palpites.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-gray-500">Nenhum palpite enviado ainda.</td></tr>`;
+                return;
+            }
 
-// ═══════════════════════════════════════════════════════════
-// SIDEBAR
-// ═══════════════════════════════════════════════════════════
-function renderSidebar() {
-  const natL = LEAGUES.filter(l => l.type === 'nat');
-  const cupL = LEAGUES.filter(l => l.type === 'cup');
-  document.getElementById('nat-nav').innerHTML = natL.map(l => leagueItem(l)).join('');
-  document.getElementById('cup-nav').innerHTML = cupL.map(l => leagueItem(l)).join('');
-}
+            palpites.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-gray-50";
+                // Checa se o jogo atrelado ao palpite existe, para evitar erro na interface caso você apague o jogo
+                const timeA = p.jogos ? p.jogos.time_a : "Jogo Excluído";
+                const timeB = p.jogos ? p.jogos.time_b : "";
 
-function leagueItem(l) {
-  const cnt = (GAMES_CACHE[l.id] || []).length;
-  return `<div class="li${l.id === CUR ? ' active' : ''}" data-lid="${l.id}" onclick="renderLeague('${l.id}')">
-    <span class="li-flag">${l.flag}</span>
-    <span class="li-name">${l.name}</span>
-    <span class="li-cnt">${cnt}</span>
-  </div>`;
-}
+                tr.innerHTML = `
+                    <td class="p-3 font-medium text-gray-700">${timeA} x ${timeB}</td>
+                    <td class="p-3 text-gray-600 font-semibold">${p.nome} <br><span class="text-xs text-gray-400 font-normal">${p.whatsapp}</span></td>
+                    <td class="p-3 font-bold text-gray-800 text-base">${p.palpite_a} x ${p.palpite_b}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-1 rounded text-xs font-bold ${p.pago ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}">
+                            ${p.pago ? 'Pix Confirmado' : 'Aguardando Pix'}
+                        </span>
+                    </td>
+                    <td class="p-3">
+                        ${!p.pago ? `<button onclick="confirmarPagamento(${p.id})" class="bg-green-600 hover:bg-green-700 text-white text-xs px-2.5 py-1 rounded font-bold transition">Aprovar</button>` : `<span class="text-gray-400 text-xs font-medium">Validado</span>`}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
 
-// ═══════════════════════════════════════════════════════════
-// FETCH GAMES FROM API
-// ═══════════════════════════════════════════════════════════
-async function fetchGamesFromAPI(competitionId) {
-  // Verificar cache primeiro
-  if (GAMES_CACHE[competitionId]) {
-    return GAMES_CACHE[competitionId];
-  }
+        async function confirmarPagamento(palpiteId) {
+            await _supabase.from('palpites').update({ pago: true }).eq('id', palpiteId);
+            init();
+        }
 
-  try {
-    const response = await fetch(
-      `${FOOTBALL_DATA_API}/competitions/${competitionId}/matches`,
-      {
-        headers: {
-          'X-Auth-Token': API_TOKEN,
-        },
-      }
-    );
+        async function encerrarJogo(e, jogoId) {
+            e.preventDefault();
+            const placarA = parseInt(document.getElementById(`res-a-${jogoId}`).value);
+            const placarB = parseInt(document.getElementById(`res-b-${jogoId}`).value);
 
-    if (!response.ok) {
-      if (response.status === 400) {
-        throw new Error('Token inválido ou não configurado. Registre-se em football-data.org');
-      }
-      throw new Error(`Erro ${response.status}: ${response.statusText}`);
-    }
+            await _supabase.from('jogos').update({ placar_a: placarA, placar_b: placarB, status: 'finalizado' }).eq('id', jogoId);
+            await init();
+            await calcularGanhadores(jogoId, placarA, placarB);
+        }
 
-    const data = await response.json();
-    const matches = data.matches || [];
+        // LÓGICA AUTOMÁTICA DE DIVISÃO DO POTE E IDENTIFICAÇÃO DOS GANHADORES
+        async function calcularGanhadores(jogoId, placarA, placarB) {
+            const { data: todosPalpites } = await _supabase.from('palpites').select('*').eq('jogo_id', jogoId).eq('pago', true);
+            
+            const totalApostas = todosPalpites ? todosPalpites.length : 0;
+            const poteTotal = totalApostas * VALOR_APOSTA;
 
-    // Filtrar apenas jogos futuros ou em andamento
-    const now = new Date();
-    const filteredMatches = matches.filter(match => {
-      const matchDate = new Date(match.utcDate);
-      return matchDate >= now || match.status === 'IN_PLAY' || match.status === 'PAUSED';
-    });
+            // Filtra de forma totalmente automatizada no sistema quem cravou o placar correto
+            const ganhadores = todosPalpites ? todosPalpites.filter(p => p.palpite_a === placarA && p.palpite_b === placarB) : [];
 
-    // Converter para formato esperado
-    const games = filteredMatches.map((match, idx) => ({
-      id: match.id,
-      l: competitionId,
-      home: match.homeTeam.name,
-      away: match.awayTeam.name,
-      time: new Date(match.utcDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      day: isToday(match.utcDate) ? 'today' : 'tomorrow',
-      hR: 75 + Math.random() * 20,
-      aR: 75 + Math.random() * 20,
-      stad: match.venue || 'Estádio',
-      ref: 'Árbitro',
-      hC: '#' + Math.floor(Math.random() * 16777215).toString(16),
-      aC: '#' + Math.floor(Math.random() * 16777215).toString(16),
-    }));
+            const modal = document.getElementById('modal-ganhadores');
+            const resumoPote = document.getElementById('resumo-pote');
+            const listaGanhadores = document.getElementById('lista-ganhadores-modal');
 
-    GAMES_CACHE[competitionId] = games;
-    return games;
-  } catch (error) {
-    console.error('Erro ao buscar jogos:', error);
-    API_ERROR = error.message;
-    document.getElementById('api-error').textContent = '❌ ' + error.message;
-    document.getElementById('api-error').style.display = 'block';
-    return [];
-  }
-}
+            listaGanhadores.innerHTML = '';
+            modal.classList.remove('hidden');
 
-function isToday(dateString) {
-  const date = new Date(dateString);
-  const today = new Date();
-  return date.toDateString() === today.toDateString();
-}
+            if (ganhadores.length === 0) {
+                resumoPote.innerHTML = `Total Arrecadado: <b>R$ ${poteTotal.toFixed(2)}</b> (${totalApostas} palpites pagos).`;
+                listaGanhadores.innerHTML = `
+                    <div class="p-4 bg-red-50 text-red-700 text-center rounded-lg border border-red-200 font-bold">
+                        A BANCA GANHOU!<br><span class="font-normal text-sm">Ninguém acertou o placar exato e o acumulado de R$ ${poteTotal.toFixed(2)} fica com a banca.</span>
+                    </div>
+                `;
+            } else {
+                // Divide o prêmio total exatamente em partes iguais entre os que acertaram
+                const premioIndividual = poteTotal / ganhadores.length;
+                resumoPote.innerHTML = `Pote Total: <b>R$ ${poteTotal.toFixed(2)}</b> dividido por <b>${ganhadores.length}</b> acertador(es).`;
+                
+                ganhadores.forEach(g => {
+                    const limpaWpp = g.whatsapp.replace(/\D/g,'');
+                    const item = document.createElement('div');
+                    item.className = "p-3 bg-green-50 border border-green-200 rounded-lg flex flex-col gap-1 shadow-sm";
+                    item.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-gray-800 text-base">${g.nome}</span>
+                            <span class="text-green-700 font-extrabold bg-green-100 px-2.5 py-1 rounded text-sm">R$ ${premioIndividual.toFixed(2)}</span>
+                        </div>
+                        <a href="https://wa.me/${limpaWpp}?text=Parabens%20voce%20acertou%20o%20bolao" target="_blank" class="text-xs text-blue-600 hover:text-blue-800 underline font-medium flex items-center gap-1 mt-1">
+                            💬 Chamar no WhatsApp (${g.whatsapp}) para pagar prêmio
+                        </a>
+                    `;
+                    listaGanhadores.appendChild(item);
+                });
+            }
+        }
 
-// ═══════════════════════════════════════════════════════════
-// RENDER LEAGUE
-// ═══════════════════════════════════════════════════════════
-async function renderLeague(lid) {
-  CUR = lid;
-  const league = LEAGUES.find(l => l.id === lid) || {};
+        function fecharModal() {
+            document.getElementById('modal-ganhadores').classList.add('hidden');
+        }
 
-  document.getElementById('tb-title').textContent = league.name || 'Liga';
-  document.getElementById('tb-badge').textContent = `${league.flag || '🏆'} ${(league.country || '').toUpperCase()}`;
-
-  document.querySelectorAll('.li').forEach(el => el.classList.toggle('active', el.dataset.lid === lid));
-
-  // Mostrar loading
-  document.getElementById('g-today').innerHTML = '<div class="loading"><div class="spinner"></div><span>Carregando partidas...</span></div>';
-  document.getElementById('g-tomorrow').innerHTML = '';
-
-  // Buscar jogos da API
-  const games = await fetchGamesFromAPI(lid);
-
-  const todayG = games.filter(g => g.day === 'today');
-  const tomorG = games.filter(g => g.day === 'tomorrow');
-
-  document.getElementById('cnt-today').textContent = `${todayG.length} jogo${todayG.length !== 1 ? 's' : ''}`;
-  document.getElementById('cnt-tomorrow').textContent = `${tomorG.length} jogo${tomorG.length !== 1 ? 's' : ''}`;
-
-  const tEl = document.getElementById('g-today');
-  const mEl = document.getElementById('g-tomorrow');
-
-  tEl.innerHTML = todayG.length ? todayG.map(g => gameCard(g)).join('') : emptyState('Nenhum jogo hoje', 'Selecione outra liga');
-  mEl.innerHTML = tomorG.length ? tomorG.map(g => gameCard(g)).join('') : emptyState('Nenhum jogo amanhã', 'Confira outra competição');
-
-  renderStats(lid);
-}
-
-function emptyState(t, s) {
-  return `<div class="es"><div class="es-icon">🔍</div><div class="es-t">${t}</div><div>${s}</div></div>`;
-}
-
-// ═══════════════════════════════════════════════════════════
-// STATS BAR
-// ═══════════════════════════════════════════════════════════
-function renderStats(lid) {
-  const g = GAMES_CACHE[lid] || [];
-  const td = g.filter(x => x.day === 'today').length;
-  const tm = g.filter(x => x.day === 'tomorrow').length;
-  document.getElementById('stats-row').innerHTML = `
-    <div class="sc"><div class="sc-icon">📅</div><div><div class="sc-val cg">${td}</div><div class="sc-lbl">Jogos Hoje</div></div></div>
-    <div class="sc"><div class="sc-icon">🔮</div><div><div class="sc-val cb">${tm}</div><div class="sc-lbl">Amanhã</div></div></div>
-    <div class="sc"><div class="sc-icon">🤖</div><div><div class="sc-val cgold">97.4%</div><div class="sc-lbl">Precisão IA</div></div></div>
-    <div class="sc"><div class="sc-icon">⚡</div><div><div class="sc-val cp">Dados Reais</div><div class="sc-lbl">Football-Data</div></div></div>
-  `;
-}
-
-// ═══════════════════════════════════════════════════════════
-// GAME CARD
-// ═══════════════════════════════════════════════════════════
-function gameCard(game) {
-  const lg = LEAGUES.find(l => l.id === game.l) || {};
-  const hc = game.hC || '#00ff9d';
-  const ac = game.aC || '#00d4ff';
-  const hw = Math.round(50 + Math.random() * 30);
-  const aw = Math.round(50 + Math.random() * 30);
-  const dw = 100 - hw - aw;
-
-  return `
-  <div class="gc" id="card-${game.id}">
-    <div class="gc-top">
-      <div class="gc-ltag">${lg.flag || '🏆'} ${lg.name || ''}</div>
-      <div class="gc-time">${game.time}</div>
-    </div>
-    <div class="gc-teams">
-      <div class="gc-team">
-        <div class="gc-badge" style="background:${hc}22;color:${hc};border:2px solid ${hc}55;">${game.home.substring(0, 3).toUpperCase()}</div>
-        <div class="gc-name">${game.home}</div>
-      </div>
-      <div class="gc-vs">VS</div>
-      <div class="gc-team">
-        <div class="gc-badge" style="background:${ac}22;color:${ac};border:2px solid ${ac}55;">${game.away.substring(0, 3).toUpperCase()}</div>
-        <div class="gc-name">${game.away}</div>
-      </div>
-    </div>
-    <div class="gc-probs">
-      <div class="gc-prob"><div class="gc-pl">Casa</div><div class="gc-pv" style="color:var(--g);">${hw}%</div></div>
-      <div class="gc-prob"><div class="gc-pl">Empate</div><div class="gc-pv" style="color:var(--gold);">${dw}%</div></div>
-      <div class="gc-prob"><div class="gc-pl">Fora</div><div class="gc-pv" style="color:var(--b);">${aw}%</div></div>
-    </div>
-    <button class="gc-btn">🤖 Analisar Partida</button>
-  </div>
-  `;
-}
-
-// ═══════════════════════════════════════════════════════════
-// CORES PARA BADGES
-// ═══════════════════════════════════════════════════════════
-const teamColors = {
-  'Manchester City': '#6CABDD',
-  'Arsenal': '#EF0107',
-  'Liverpool': '#C8102E',
-  'Real Madrid': '#FEBE10',
-  'Barcelona': '#A50044',
-  'Bayern Munich': '#DC052D',
-  'PSG': '#003090',
-  'Flamengo': '#FF0000',
-  'Palmeiras': '#006437',
-  'Corinthians': '#000000',
-  'São Paulo': '#CE1134',
-};
-</script>
-
+        window.onload = init;
+    </script>
 </body>
 </html>
